@@ -1,0 +1,10 @@
+^.*\.Rproj$
+^\.Rproj\.user$
+^\.git$
+^\.github$
+^src/.*\.(o|obj|dll|so|dylib)$
+^src/.*\.(a|lib)$
+^src/Makevars\.user$
+^.*\.tar\.gz$
+^cran-comments\.md$
+^LICENSE\.md$

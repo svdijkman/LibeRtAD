@@ -1,0 +1,108 @@
+---
+title: "Getting Started with LibeRtAD"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Getting Started with LibeRtAD}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+LibeRtAD provides reverse- and forward-mode automatic differentiation for
+scalar objectives in R. The main entry point is `autodiff()`; `backdiff()`
+and `forwarddiff()` are convenience wrappers.
+
+## Reverse mode
+
+Differentiate a simple function at a point:
+
+```{r reverse-scalar}
+library(LibeRtAD)
+
+f <- function(x, y, z) {
+  3 * x^4 + y / z / x + z * 3
+}
+
+res <- backdiff(f, x = 2, y = 2, z = 3)
+res$value
+res$gradient
+```
+
+Vector arguments are supported; partial derivatives are returned per element:
+
+```{r reverse-vector}
+f_vec <- function(x) sum(x^2)
+res_vec <- backdiff(f_vec, x = c(1, 2, 3))
+res_vec$partials
+```
+
+## Forward mode and the C++ backend
+
+Forward mode propagates tangents from each parameter. The C++ backend can
+accelerate the backward or forward pass:
+
+```{r forward-cpp}
+f_sqrt <- function(x) sum(sqrt(abs(x)))
+fwd <- autodiff(
+  f_sqrt,
+  x = c(1, 4, 9),
+  mode = "forward",
+  backend = "cpp"
+)
+fwd$partials
+```
+
+## Matrix arguments
+
+Matrix and vector parameters work the same way:
+
+```{r matrix-args}
+f_mat <- function(A, B) sum(A %*% B)
+A <- matrix(c(1, 2, 3, 4), nrow = 2)
+B <- matrix(c(5, 6, 7, 8), nrow = 2)
+mat_res <- autodiff(f_mat, A = A, B = B, mode = "reverse")
+names(mat_res$partials)
+```
+
+## Hessian
+
+For small parameter vectors, `autodiff_hessian()` builds the Hessian from AD:
+
+```{r hessian}
+f_quad <- function(x) sum(x^2)
+H <- autodiff_hessian(f_quad, x = c(1, 2, 3))
+H
+```
+
+## Piecewise expressions
+
+Non-smooth functions such as `pmax()` are handled on the active branch:
+
+```{r piecewise}
+f_pw <- function(x) pmax(x^2, 2 * x)
+pw <- backdiff(f_pw, x = 3)
+pw$value
+pw$gradient
+```
+
+## Tape diagnostics
+
+When `record_tape = TRUE` (the default), you can inspect tape statistics:
+
+```{r tape-stats}
+reset_tape()
+backdiff(f, x = 2, y = 2, z = 3, record_tape = TRUE)
+ad_tape_stats()
+```
+
+## Next steps
+
+- Function reference: `?autodiff`, `?backdiff`, `?autodiff_hessian`
+- Example script: `system.file("examples", "basic-example.R", package = "LibeRtAD")`
+- Linked packages can register custom reverse rules via C callables (see package source)

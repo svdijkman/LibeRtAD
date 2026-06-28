@@ -1,0 +1,19 @@
+.Rproj.user
+*.Rproj
+*.tar.gz
+cran-comments.md
+LICENSE.md
+
+# Compiled objects
+*.o
+*.obj
+*.dll
+*.so
+*.dylib
+src/*.a
+src/*.lib
+src/Makevars.user
+
+# IDE / OS
+.DS_Store
+Thumbs.db
