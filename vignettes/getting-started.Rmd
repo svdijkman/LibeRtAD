@@ -101,8 +101,37 @@ backdiff(f, x = 2, y = 2, z = 3, record_tape = TRUE)
 ad_tape_stats()
 ```
 
+## Tape reuse
+
+For repeated evaluations with the same graph structure (e.g. optimisation loops),
+save and reuse the tape to skip graph construction:
+
+```{r tape-reuse}
+f_quad <- function(x) sum(x^2)
+autodiff(f_quad, x = c(1, 2), record_tape = TRUE)
+ad_tape_save("quad2")
+ad_tape_reuse(f_quad, at = list(x = c(3, 4)), cache_key = "quad2")
+```
+
+## NONMEM expression syntax
+
+Control streams often use Fortran `**` for powers. Normalize before AD:
+
+```{r nm-expr}
+ad_nm_expr_normalize("CL = THETA(1) ** 2 * EXP(ETA(1))")
+```
+
+## Sparse Jacobian
+
+For vector-valued residuals, extract sparsity pattern and values:
+
+```{r sparse-jac}
+f_res <- function(theta) c(theta[1]^2 - 4, theta[2] - 1)
+sparse_jacobian(f_res, theta = c(2, 1))
+```
+
 ## Next steps
 
-- Function reference: `?autodiff`, `?backdiff`, `?autodiff_hessian`
+- Function reference: `?autodiff`, `?backdiff`, `?autodiff_hessian`, `?ad_tape_reuse`
 - Example script: `system.file("examples", "basic-example.R", package = "LibeRtAD")`
 - Linked packages can register custom reverse rules via C callables (see package source)

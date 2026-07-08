@@ -31,6 +31,14 @@ via registered C callables.
 }
 }
 
+\section{NONMEM expressions}{
+
+\itemize{
+\item \code{\link[=ad_nm_expr_normalize]{ad_nm_expr_normalize()}} converts Fortran \code{**} power syntax to R
+\code{^} before parsing control-stream expressions for AD.
+}
+}
+
 \section{Low-level graph API}{
 
 \itemize{

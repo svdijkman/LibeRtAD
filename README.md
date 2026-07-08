@@ -36,7 +36,9 @@ See `inst/examples/basic-example.R` for matrix arguments and piecewise functions
 | `forwarddiff()` | Forward-mode wrapper |
 | `autodiff_hessian()` | Hessian matrix |
 | `sparse_jacobian()` | Sparse Jacobian |
-| `ad_tape_save()` / `ad_tape_load()` | Tape persistence |
+| `ad_tape_save()` / `ad_tape_load()` / `ad_tape_reuse()` | Tape persistence and reuse |
+| `ad_nm_expr_normalize()` | NONMEM `**` → `^` for expression AD |
+| `sparse_jacobian()` / `ad_sparse_jacobian()` | Sparse Jacobian triplets |
 
 ## Documentation
 

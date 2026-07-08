@@ -17,6 +17,10 @@
 #' * [reset_tape()], [ad_tape_save()], [ad_tape_load()], [ad_tape_reuse()],
 #'   [ad_tape_stats()]
 #'
+#' @section NONMEM expressions:
+#' * [ad_nm_expr_normalize()] converts Fortran \code{**} power syntax to R
+#'   \code{^} before parsing control-stream expressions for AD.
+#'
 #' @section Low-level graph API:
 #' * [Variable], [Constant], [newVariable()], [newConstant()], [ad_var()]
 #' * Arithmetic and math overloads for `Variable` objects (see [Variable])
