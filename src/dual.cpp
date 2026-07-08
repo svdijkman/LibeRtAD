@@ -4,6 +4,7 @@
 #include <cmath>
 #include <limits>
 #include "ad_custom_reverse.h"
+#include "ad_custom_forward.h"
 using namespace Rcpp;
 
 int g_ad_node_seq = 0;
@@ -881,6 +882,10 @@ void reverse_diff_node(Environment myvar) {
 void reverse_tape_cpp(List tape) {
   g_use_grad_sidecar = true;
   reset_grad_sidecar_cpp();
+  if (tape.size() > 0) {
+    Environment root = tape[tape.size() - 1];
+    root["grad"] = NumericVector::create(1.0);
+  }
   for (int i = tape.size() - 1; i >= 0; --i) {
     reverse_diff_node(tape[i]);
   }
@@ -1093,3 +1098,238 @@ double forwardDiff(Environment myvar) {
   NumericVector tv = as_numeric(tan);
   return tv[0];
 }
+
+namespace {
+
+bool op_is_empty(Environment node) {
+  if (!node.exists("op")) {
+    return true;
+  }
+  SEXP op_sexp = node["op"];
+  if (Rf_isNull(op_sexp)) {
+    return true;
+  }
+  CharacterVector cv = as<CharacterVector>(op_sexp);
+  if (cv.size() == 0) {
+    return true;
+  }
+  if (CharacterVector::is_na(cv[0])) {
+    return true;
+  }
+  return as<std::string>(cv[0]) == "";
+}
+
+bool is_param_leaf(Environment node) {
+  if (is_constant_cpp(node)) {
+    return false;
+  }
+  if (!node.exists("par")) {
+    return false;
+  }
+  if (!as<bool>(node["par"])) {
+    return false;
+  }
+  return op_is_empty(node);
+}
+
+void set_node_value(Environment node, SEXP val) {
+  node["value"] = val;
+}
+
+void replay_unary(Environment node, const std::string& op) {
+  List parents = node["parents"];
+  NumericVector p1v = as_numeric(get_node_value(parents[0]));
+  NumericVector out(p1v.size());
+  if (op == "neg") {
+    for (R_xlen_t i = 0; i < p1v.size(); ++i) out[i] = -p1v[i];
+  } else if (op == "sin") {
+    for (R_xlen_t i = 0; i < p1v.size(); ++i) out[i] = std::sin(p1v[i]);
+  } else if (op == "cos") {
+    for (R_xlen_t i = 0; i < p1v.size(); ++i) out[i] = std::cos(p1v[i]);
+  } else if (op == "exp") {
+    for (R_xlen_t i = 0; i < p1v.size(); ++i) out[i] = std::exp(p1v[i]);
+  } else if (op == "log") {
+    for (R_xlen_t i = 0; i < p1v.size(); ++i) out[i] = std::log(p1v[i]);
+  } else if (op == "abs") {
+    for (R_xlen_t i = 0; i < p1v.size(); ++i) out[i] = std::abs(p1v[i]);
+  } else if (op == "sqrt") {
+    for (R_xlen_t i = 0; i < p1v.size(); ++i) out[i] = std::sqrt(p1v[i]);
+  } else {
+    stop("Unsupported unary replay op: " + op);
+  }
+  set_node_value(node, preserve_dims(out, get_node_value(parents[0])));
+}
+
+void replay_binary(Environment node, const std::string& op) {
+  List parents = node["parents"];
+  NumericVector p1v = as_numeric(get_node_value(parents[0]));
+  NumericVector p2v = as_numeric(get_node_value(parents[1]));
+  NumericVector out(p1v.size());
+  if (op == "+") {
+    for (R_xlen_t i = 0; i < p1v.size(); ++i) {
+      out[i] = p1v[i] + p2v[i % p2v.size()];
+    }
+  } else if (op == "-") {
+    for (R_xlen_t i = 0; i < p1v.size(); ++i) {
+      out[i] = p1v[i] - p2v[i % p2v.size()];
+    }
+  } else if (op == "*") {
+    for (R_xlen_t i = 0; i < p1v.size(); ++i) {
+      out[i] = p1v[i] * p2v[i % p2v.size()];
+    }
+  } else if (op == "/") {
+    for (R_xlen_t i = 0; i < p1v.size(); ++i) {
+      out[i] = p1v[i] / p2v[i % p2v.size()];
+    }
+  } else if (op == "^") {
+    out = vec_pow(p1v, p2v);
+  } else {
+    stop("Unsupported binary replay op: " + op);
+  }
+  set_node_value(node, preserve_dims_binary(out, get_node_value(parents[0]),
+                                            get_node_value(parents[1])));
+}
+
+void replay_logsumexp(Environment node) {
+  List parents = node["parents"];
+  double m = R_NegInf;
+  for (R_xlen_t i = 0; i < parents.size(); ++i) {
+    double vi = as<NumericVector>(get_node_value(parents[i]))[0];
+    if (vi > m) m = vi;
+  }
+  double s = 0.0;
+  for (R_xlen_t i = 0; i < parents.size(); ++i) {
+    double vi = as<NumericVector>(get_node_value(parents[i]))[0];
+    s += std::exp(vi - m);
+  }
+  double out = m + std::log(s);
+  set_node_value(node, NumericVector::create(out));
+  if (node.exists("meta")) {
+    node["meta"] = List::create(Named("max") = m);
+  }
+}
+
+void replay_node_value(Environment node) {
+  if (op_is_empty(node)) {
+    return;
+  }
+  std::string op = as<std::string>(node["op"]);
+  if (ad_custom_fwd::dispatch(op, node)) {
+    return;
+  }
+  List parents = node["parents"];
+  if (op == "sum") {
+    NumericVector p1v = as_numeric(get_node_value(parents[0]));
+    double s = 0.0;
+    for (R_xlen_t i = 0; i < p1v.size(); ++i) s += p1v[i];
+    set_node_value(node, NumericVector::create(s));
+    return;
+  }
+  if (op == "mean") {
+    NumericVector p1v = as_numeric(get_node_value(parents[0]));
+    double s = 0.0;
+    for (R_xlen_t i = 0; i < p1v.size(); ++i) s += p1v[i];
+    double m = p1v.size() > 0 ? s / static_cast<double>(p1v.size()) : 0.0;
+    set_node_value(node, NumericVector::create(m));
+    return;
+  }
+  if (op == "max") {
+    NumericVector p1v = as_numeric(get_node_value(parents[0]));
+    int idx = which_max_r(p1v);
+    set_node_value(node, NumericVector::create(p1v[idx - 1]));
+    if (node.exists("meta")) {
+      node["meta"] = List::create(Named("index") = idx);
+    }
+    return;
+  }
+  if (op == "[") {
+    List meta = node["meta"];
+    int idx = as<int>(meta["index"]);
+    NumericVector p1v = as_numeric(get_node_value(parents[0]));
+    set_node_value(node, NumericVector::create(p1v[idx - 1]));
+    return;
+  }
+  if (op == "logsumexp") {
+    replay_logsumexp(node);
+    return;
+  }
+  if (op == "pmax" || op == "pmin") {
+    NumericVector p1v = as_numeric(get_node_value(parents[0]));
+    NumericVector p2v = as_numeric(get_node_value(parents[1]));
+    NumericVector out(p1v.size());
+    IntegerVector branch(out.size());
+    for (R_xlen_t i = 0; i < out.size(); ++i) {
+      double a = p1v[i];
+      double b = p2v[i % p2v.size()];
+      if (op == "pmax") {
+        out[i] = std::max(a, b);
+        branch[i] = (a >= b) ? 1 : 2;
+      } else {
+        out[i] = std::min(a, b);
+        branch[i] = (a <= b) ? 1 : 2;
+      }
+    }
+    set_node_value(node, out);
+    node["meta"] = List::create(Named("branch") = branch);
+    return;
+  }
+  if (op == "%*%") {
+    set_node_value(node, matmul_numeric(get_node_value(parents[0]),
+                                        get_node_value(parents[1])));
+    return;
+  }
+  if (is_unary_op(op)) {
+    replay_unary(node, op);
+    return;
+  }
+  replay_binary(node, op);
+}
+
+}  // namespace
+
+// [[Rcpp::export]]
+void reset_tape_grads_cpp(List tape) {
+  for (int i = 0; i < tape.size(); ++i) {
+    Environment node = tape[i];
+    node["grad"] = zeros_like(get_node_value(node));
+  }
+}
+
+// [[Rcpp::export]]
+void replay_tape_values_cpp(List tape, List at) {
+  CharacterVector at_names = at.names();
+  if (at_names.size() == 0) {
+    stop("Parameter list `at` must be named.");
+  }
+  for (int i = 0; i < tape.size(); ++i) {
+    Environment node = tape[i];
+    if (!is_param_leaf(node)) {
+      continue;
+    }
+    std::string nm = getvarname(node);
+    for (R_xlen_t j = 0; j < at_names.size(); ++j) {
+      if (as<std::string>(at_names[j]) == nm) {
+        set_node_value(node, at[j]);
+        break;
+      }
+    }
+  }
+  for (int i = 0; i < tape.size(); ++i) {
+    Environment node = tape[i];
+    if (is_constant_cpp(node) || is_param_leaf(node)) {
+      continue;
+    }
+    replay_node_value(node);
+  }
+}
+
+// [[Rcpp::export]]
+double tape_scalar_value_cpp(List tape) {
+  if (tape.size() == 0) {
+    return NA_REAL;
+  }
+  Environment root = tape[tape.size() - 1];
+  NumericVector v = as<NumericVector>(get_node_value(root));
+  return v[0];
+}
+

@@ -121,3 +121,15 @@ forwardDiff <- function(myvar) {
     .Call(`_LibeRtAD_forwardDiff`, myvar)
 }
 
+reset_tape_grads_cpp <- function(tape) {
+    invisible(.Call(`_LibeRtAD_reset_tape_grads_cpp`, tape))
+}
+
+replay_tape_values_cpp <- function(tape, at) {
+    invisible(.Call(`_LibeRtAD_replay_tape_values_cpp`, tape, at))
+}
+
+tape_scalar_value_cpp <- function(tape) {
+    .Call(`_LibeRtAD_tape_scalar_value_cpp`, tape)
+}
+

@@ -58,6 +58,35 @@ ad_tape_load <- function(key, env = .ad_tape_cache_env()) {
 #' autodiff(f, x = 2, record_tape = TRUE)
 #' ad_tape_save("quad")
 #' ad_tape_reuse(f, at = list(x = 3), cache_key = "quad")
+#' @keywords internal
+.ad_bind_tape_parameters <- function(tape, at) {
+  lapply(names(at), function(nm) {
+    for (node in tape) {
+      if (is_variable(node) && isTRUE(node$par) && identical(node$name, nm)) {
+        return(node)
+      }
+    }
+    stop("Cached tape missing parameter `", nm, "`.", call. = FALSE)
+  })
+}
+
+#' @keywords internal
+.ad_tape_replay_grad <- function(tape, at, backend = "cpp") {
+  at <- .ad_parse_at(at)
+  parameters <- .ad_bind_tape_parameters(tape, at)
+  replay_tape_values_cpp(tape, at)
+  reset_tape_grads_cpp(tape)
+  set_ops(backend)
+  on.exit(set_ops("R"), add = TRUE)
+  .ad_run_reverse(tape[[length(tape)]], backend)
+  partials_flat <- .ad_collect_reverse_partials(parameters)
+  list(
+    value = tape_scalar_value_cpp(tape),
+    partials_flat = partials_flat,
+    parameters = parameters
+  )
+}
+
 ad_tape_reuse <- function(f, at = NULL, cache_key = NULL, backend = c("R", "cpp")) {
   backend <- match.arg(backend)
   at <- .ad_parse_at(at)
@@ -67,13 +96,9 @@ ad_tape_reuse <- function(f, at = NULL, cache_key = NULL, backend = c("R", "cpp"
     .ad_state$tape <- cached$tape
     .ad_state$active <- FALSE
     .ad_state$graph_gen <- cached$graph_gen
-    set_ops(backend)
-    parameters <- .ad_values_to_parameters(at)
-    .ad_reset_gradients(parameters)
-    result <- .ad_eval_function(f, parameters)
-    .ad_run_reverse(result, backend)
-    partials_flat <- .ad_collect_reverse_partials(parameters)
-    return(.ad_collect_result(result, parameters, partials_flat))
+    replayed <- .ad_tape_replay_grad(cached$tape, at, backend)
+    root <- cached$tape[[length(cached$tape)]]
+    return(.ad_collect_result(root, replayed$parameters, replayed$partials_flat))
   }
   autodiff(f, at = at, mode = "reverse", backend = backend, record_tape = TRUE)
 }

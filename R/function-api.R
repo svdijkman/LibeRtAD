@@ -216,6 +216,7 @@
 #' @keywords internal
 .ad_eval_function <- function(f, parameters) {
   env <- .ad_make_eval_env(parameters)
+  parent.env(env) <- environment(f)
   .ad_bind_formal_defaults(f, env)
   result <- .ad_as_ad_node(eval(body(f), envir = env))
   if (.ad_node_len(result$value) != 1L) {

@@ -339,6 +339,38 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// reset_tape_grads_cpp
+void reset_tape_grads_cpp(List tape);
+RcppExport SEXP _LibeRtAD_reset_tape_grads_cpp(SEXP tapeSEXP) {
+BEGIN_RCPP
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< List >::type tape(tapeSEXP);
+    reset_tape_grads_cpp(tape);
+    return R_NilValue;
+END_RCPP
+}
+// replay_tape_values_cpp
+void replay_tape_values_cpp(List tape, List at);
+RcppExport SEXP _LibeRtAD_replay_tape_values_cpp(SEXP tapeSEXP, SEXP atSEXP) {
+BEGIN_RCPP
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< List >::type tape(tapeSEXP);
+    Rcpp::traits::input_parameter< List >::type at(atSEXP);
+    replay_tape_values_cpp(tape, at);
+    return R_NilValue;
+END_RCPP
+}
+// tape_scalar_value_cpp
+double tape_scalar_value_cpp(List tape);
+RcppExport SEXP _LibeRtAD_tape_scalar_value_cpp(SEXP tapeSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< List >::type tape(tapeSEXP);
+    rcpp_result_gen = Rcpp::wrap(tape_scalar_value_cpp(tape));
+    return rcpp_result_gen;
+END_RCPP
+}
 
 static const R_CallMethodDef CallEntries[] = {
     {"_LibeRtAD_reset_ad_node_seq_export", (DL_FUNC) &_LibeRtAD_reset_ad_node_seq_export, 0},
@@ -371,12 +403,17 @@ static const R_CallMethodDef CallEntries[] = {
     {"_LibeRtAD_reverse_tape_cpp", (DL_FUNC) &_LibeRtAD_reverse_tape_cpp, 1},
     {"_LibeRtAD_reverseDiff", (DL_FUNC) &_LibeRtAD_reverseDiff, 1},
     {"_LibeRtAD_forwardDiff", (DL_FUNC) &_LibeRtAD_forwardDiff, 1},
+    {"_LibeRtAD_reset_tape_grads_cpp", (DL_FUNC) &_LibeRtAD_reset_tape_grads_cpp, 1},
+    {"_LibeRtAD_replay_tape_values_cpp", (DL_FUNC) &_LibeRtAD_replay_tape_values_cpp, 2},
+    {"_LibeRtAD_tape_scalar_value_cpp", (DL_FUNC) &_LibeRtAD_tape_scalar_value_cpp, 1},
     {NULL, NULL, 0}
 };
 
+void ad_forward_init_c_callables(DllInfo* dll);
 void ad_init_c_callables(DllInfo* dll);
 RcppExport void R_init_LibeRtAD(DllInfo *dll) {
     R_registerRoutines(dll, NULL, CallEntries, NULL, NULL);
     R_useDynamicSymbols(dll, FALSE);
+    ad_forward_init_c_callables(dll);
     ad_init_c_callables(dll);
 }
