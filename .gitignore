@@ -1,19 +1,10 @@
-.Rproj.user
-*.Rproj
+*.Rcheck/
 *.tar.gz
-cran-comments.md
-LICENSE.md
-
-# Compiled objects
-*.o
-*.obj
-*.dll
-*.so
-*.dylib
+src/*.o
+src/*.obj
+src/*.so
+src/*.dll
 src/*.a
-src/*.lib
-src/Makevars.user
-
-# IDE / OS
-.DS_Store
-Thumbs.db
+.Rhistory
+.RData
+.Rproj.user/

@@ -4,59 +4,9 @@
 \name{LibeRtAD-package}
 \alias{LibeRtAD}
 \alias{LibeRtAD-package}
-\title{LibeRtAD: Reverse-Mode Automatic Differentiation in R}
+\title{LibeRtAD: the compiled automatic-differentiation layer for LibeR}
 \description{
-LibeRtAD implements reverse- and forward-mode automatic differentiation
-for scalar objectives using R6 computational graphs. An optional C++
-backend accelerates the backward pass; tape caching, Hessians, and sparse
-Jacobians are supported. Linked packages can register custom reverse rules
-via registered C callables.
-}
-\section{Main entry points}{
-
-\itemize{
-\item \code{\link[=autodiff]{autodiff()}} — unified AD (reverse or forward, R or C++ backend)
-\item \code{\link[=backdiff]{backdiff()}} — reverse-mode convenience wrapper
-\item \code{\link[=forwarddiff]{forwarddiff()}} — forward-mode convenience wrapper
-\item \code{\link[=autodiff_hessian]{autodiff_hessian()}} — Hessian via AD or numeric fallback
-\item \code{\link[=sparse_jacobian]{sparse_jacobian()}} — sparse Jacobian structure and values
-}
-}
-
-\section{Tape utilities}{
-
-\itemize{
-\item \code{\link[=reset_tape]{reset_tape()}}, \code{\link[=ad_tape_save]{ad_tape_save()}}, \code{\link[=ad_tape_load]{ad_tape_load()}}, \code{\link[=ad_tape_reuse]{ad_tape_reuse()}},
-\code{\link[=ad_tape_stats]{ad_tape_stats()}}
-}
-}
-
-\section{NONMEM expressions}{
-
-\itemize{
-\item \code{\link[=ad_nm_expr_normalize]{ad_nm_expr_normalize()}} converts Fortran \code{**} power syntax to R
-\code{^} before parsing control-stream expressions for AD.
-}
-}
-
-\section{Low-level graph API}{
-
-\itemize{
-\item \link{Variable}, \link{Constant}, \code{\link[=newVariable]{newVariable()}}, \code{\link[=newConstant]{newConstant()}}, \code{\link[=ad_var]{ad_var()}}
-\item Arithmetic and math overloads for \code{Variable} objects (see \link{Variable})
-}
-}
-
-\section{Options}{
-
-\itemize{
-\item \code{options(LibeRtAD.n_cores = ...)} — parallel worker count for tape ops
-\item \code{options(LibeRtAD.n_cores_auto = TRUE)} — auto-detect cores minus one
-}
-}
-
-\seealso{
-The example script at \code{inst/examples/basic-example.R}.
+Compiles a restricted R-like mathematical model language to a serializable intermediate representation and evaluates persistent CppAD tapes through RcppEigenAD. A small R6 wrapper owns external pointers while numerical evaluation, gradients, Jacobians, and Hessians execute in C++.
 }
 \author{
 \strong{Maintainer}: Sven C. van Dijkman \email{svdijkman@users.noreply.github.com}
@@ -67,3 +17,4 @@ Authors:
 }
 
 }
+\keyword{internal}

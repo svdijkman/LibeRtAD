@@ -1,17 +1,13 @@
-# LibeRtAD 0.4.1
+# LibeRtAD 0.6.0
 
-* Updated manuals (`roxygen2`), README, and getting-started vignette (tape reuse,
-  NONMEM expression normalization, sparse Jacobian examples).
-* Documented C++ tape helpers `replay_tape_values_cpp()`, `reset_tape_grads_cpp()`,
-  and `tape_scalar_value_cpp()`.
+- Replaced the legacy R-level AD implementation with a persistent
+  RcppEigenAD/CppAD C++ engine.
+- Added a serializable, validated expression intermediate representation.
+- Added a light R6/external-pointer interface for values, gradients,
+  Jacobians, Hessians, and combined value/gradient evaluation.
+- Added conditional-expression support and strict rejection of unsupported
+  runtime constructs.
+- Added registered native routines and C++17 package integration for use by
+  LibeRation.
 
-# LibeRtAD 0.4.0
-
-* NONMEM expression AD (`nm-expr`), custom forward rules, tape reuse tests, and C++ forward-mode extensions.
-
-# LibeRtAD 0.3.0
-
-* Initial public release preparation.
-* Reverse- and forward-mode AD with optional C++ backend.
-* Hessian support, tape save/load/reuse, and sparse Jacobian triplets.
-* Renamed from RcppAD; package options use `LibeRtAD.*` prefix.
+This release is an architectural and API break from the 0.4.x series.

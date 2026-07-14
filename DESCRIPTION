@@ -1,27 +1,28 @@
 Package: LibeRtAD
-Title: Reverse-Mode Automatic Differentiation
-Version: 0.4.1
-Authors@R: 
-    person("Sven C.", "van Dijkman", email = "svdijkman@users.noreply.github.com", role = c("aut", "cre"))
-Description: Reverse-mode automatic differentiation for scalar expressions
-    using R6 computational graphs, with optional Rcpp-accelerated
-    backward passes. Includes Hessian support, tape diagnostics, and
-    extensible custom reverse rules for linked packages.
+Type: Package
+Title: C++ Automatic Differentiation Engine for LibeR
+Version: 0.6.0
+Authors@R: person("Sven C.", "van Dijkman",
+    email = "svdijkman@users.noreply.github.com", role = c("aut", "cre"))
+Author: Sven C. van Dijkman [aut, cre]
+Maintainer: Sven C. van Dijkman <svdijkman@users.noreply.github.com>
+Description: Compiles a restricted R-like mathematical model language to a
+    serializable intermediate representation and evaluates persistent CppAD
+    tapes through RcppEigenAD. A small R6 wrapper owns external pointers while
+    numerical evaluation, gradients, Jacobians, and Hessians execute in C++.
 License: MIT + file LICENSE
-URL: https://github.com/svdijkman/LibeRtAD
-BugReports: https://github.com/svdijkman/LibeRtAD/issues
 Encoding: UTF-8
-Roxygen: list(markdown = TRUE, r6 = FALSE)
+Depends: R (>= 4.1.0)
 Imports:
     R6,
+    Rcpp
+LinkingTo:
     Rcpp,
-    stats
-LinkingTo: Rcpp
+    RcppEigen,
+    RcppEigenAD,
+    BH
 Suggests:
-    testthat (>= 3.0.0),
-    numDeriv,
-    knitr,
-    rmarkdown
+    testthat (>= 3.0.0)
+SystemRequirements: C++17
 Config/testthat/edition: 3
 Config/roxygen2/version: 8.0.0
-VignetteBuilder: knitr
