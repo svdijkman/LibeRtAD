@@ -1,0 +1,124 @@
+---
+title: "LibeRtAD automatic-differentiation engine"
+author: "Sven C. van Dijkman"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{LibeRtAD automatic-differentiation engine}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(collapse = TRUE, comment = "#>")
+```
+
+## Purpose and architecture
+
+LibeRtAD is the automatic-differentiation layer used by LibeRation. Model
+text is translated to a validated, serializable intermediate representation
+(IR). C++ then owns the executable program and persistent CppAD tape. R owns a
+small R6 wrapper containing external pointers and the IR required to rebuild
+those pointers in a worker process.
+
+The separation is intentional:
+
+1. model text and IR can be saved or sent to another process;
+2. arbitrary R evaluation is excluded from the numerical path; and
+3. values, Jacobians, gradients, and Hessians are evaluated in C++.
+
+## Supported model language
+
+The first compiler version accepts scalar assignments, arithmetic operators,
+common mathematical functions, and `ifelse()` conditions. NONMEM-style
+indexed parameters are normalized to ordinary IR inputs.
+
+```{r language}
+library(LibeRtAD)
+ad_supported()
+
+ir <- ad_ir(
+  paste(
+    "CL = THETA(1) * exp(ETA(1))",
+    "V = THETA(2)",
+    "K = CL / V",
+    "PENALTY = log(K)^2",
+    sep = "\n"
+  ),
+  outputs = c("K", "PENALTY")
+)
+ir
+```
+
+Undeclared scalar symbols become inputs in first-use order. Supplying
+`inputs` explicitly is preferable at interfaces where a stable domain order
+matters. Unknown function calls, arbitrary R code, loops, allocation, and I/O
+are rejected rather than evaluated.
+
+## Compiling and recording a tape
+
+`ad_compile()` creates an `ADModel`. Passing `at` also records a tape. The
+`wrt` argument selects the differentiable domain and `outputs` selects the
+range.
+
+```{r compile}
+model <- ad_compile(
+  "CL = THETA(1) * exp(ETA(1))\nPENALTY = log(CL)^2",
+  at = c(THETA_1 = 2, ETA_1 = 0),
+  wrt = c("THETA_1", "ETA_1"),
+  outputs = "PENALTY"
+)
+model
+
+point <- c(THETA_1 = 2.2, ETA_1 = 0.1)
+model$value(point)
+model$gradient(point)
+model$hessian(point)
+model$value_gradient(point)
+```
+
+A multi-output tape exposes a Jacobian. A gradient or Hessian requires exactly
+one active output.
+
+```{r jacobian}
+multi <- ad_compile(
+  "SUM = X + Y\nPRODUCT = X * Y",
+  inputs = c("X", "Y"),
+  outputs = c("SUM", "PRODUCT"),
+  at = c(X = 2, Y = 3),
+  wrt = c("X", "Y")
+)
+multi$jacobian(c(X = 4, Y = 5))
+```
+
+Use `$record()` to change the differentiation domain or output set without
+recompiling the IR.
+
+```{r rerecord}
+multi$record(
+  at = c(X = 2, Y = 3),
+  wrt = "X",
+  outputs = "PRODUCT"
+)
+multi$value_gradient(c(X = 4))
+```
+
+## Worker reconstruction and lifetime
+
+External pointers are process-local and must not be serialized. Persist
+`model$ir`, or the original model text, and rebuild with `ADModel$new(ir)` in
+the destination process. This is the pattern used by LibeRation and
+LibeRties workers.
+
+The R6 object controls pointer lifetime. Keep the object alive for as long as
+its compiled program or tape is needed. Replacing or removing the object lets
+R finalize the C++ resources.
+
+## Engine information
+
+```{r engine-info}
+ad_engine_info()
+```
+
+The package is intentionally a numerical backend. Population objectives,
+ADVAN event handling, estimation algorithms, and graphical workflows belong
+to LibeRation.

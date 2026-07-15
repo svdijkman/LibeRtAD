@@ -22,7 +22,10 @@ LinkingTo:
     RcppEigenAD,
     BH
 Suggests:
+    knitr,
+    rmarkdown,
     testthat (>= 3.0.0)
+VignetteBuilder: knitr
 SystemRequirements: C++17
 Config/testthat/edition: 3
 Config/roxygen2/version: 8.0.0

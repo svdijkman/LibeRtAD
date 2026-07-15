@@ -1,0 +1,3 @@
+^\.gitignore$
+^src/.*[.](o|obj|dll|so|dylib|a|def)$
+^src/symbols[.]rds$

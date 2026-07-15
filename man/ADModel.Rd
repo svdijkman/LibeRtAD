@@ -7,6 +7,22 @@
 `ADModel` is deliberately light: the serializable IR is retained for worker
 reconstruction, while C++ owns the executable program and persistent tape.
 }
+\section{Public fields}{
+  \if{html}{\out{<div class="r6-fields">}}
+  \describe{
+    \item{\code{ir}}{Serializable intermediate representation created by [ad_ir()].}
+
+    \item{\code{program_ptr}}{External pointer to the compiled C++ expression program.}
+
+    \item{\code{tape_ptr}}{External pointer to the persistent CppAD tape, or `NULL`
+until [ADModel]$record() is called.}
+
+    \item{\code{wrt}}{Character vector naming the active differentiation inputs.}
+
+    \item{\code{outputs}}{Character vector naming the active model outputs.}
+  }
+  \if{html}{\out{</div>}}
+}
 \section{Methods}{
 \subsection{Public methods}{
   \itemize{
@@ -25,10 +41,21 @@ reconstruction, while C++ owns the executable program and persistent tape.
 \if{html}{\out{<a id="method-ADModel-initialize"></a>}}
 \if{latex}{\out{\hypertarget{method-ADModel-initialize}{}}}
 \subsection{\code{ADModel$new()}}{
+  Create a pointer-backed model from a validated intermediate representation.
   \subsection{Usage}{
     \if{html}{\out{<div class="r">}}
     \preformatted{ADModel$new(ir)}
     \if{html}{\out{</div>}}
+  }
+  \subsection{Arguments}{
+    \if{html}{\out{<div class="arguments">}}
+    \describe{
+      \item{\code{ir}}{A `libertad_ir` object created by [ad_ir()].}
+    }
+    \if{html}{\out{</div>}}
+  }
+  \subsection{Returns}{
+    A new `ADModel` object.
   }
 }
 
@@ -36,10 +63,24 @@ reconstruction, while C++ owns the executable program and persistent tape.
 \if{html}{\out{<a id="method-ADModel-record"></a>}}
 \if{latex}{\out{\hypertarget{method-ADModel-record}{}}}
 \subsection{\code{ADModel$record()}}{
+  Record a persistent CppAD tape at a named parameter point.
   \subsection{Usage}{
     \if{html}{\out{<div class="r">}}
     \preformatted{ADModel$record(at, wrt = names(at), outputs = self$outputs, optimize = TRUE)}
     \if{html}{\out{</div>}}
+  }
+  \subsection{Arguments}{
+    \if{html}{\out{<div class="arguments">}}
+    \describe{
+      \item{\code{at}}{Named numeric values for every model input.}
+      \item{\code{wrt}}{Input names with respect to which derivatives are required.}
+      \item{\code{outputs}}{Output assignment names to place on the tape.}
+      \item{\code{optimize}}{Whether to run CppAD tape optimization.}
+    }
+    \if{html}{\out{</div>}}
+  }
+  \subsection{Returns}{
+    The model, invisibly.
   }
 }
 
@@ -47,10 +88,23 @@ reconstruction, while C++ owns the executable program and persistent tape.
 \if{html}{\out{<a id="method-ADModel-value"></a>}}
 \if{latex}{\out{\hypertarget{method-ADModel-value}{}}}
 \subsection{\code{ADModel$value()}}{
+  Evaluate model outputs with the compiled program or recorded tape.
   \subsection{Usage}{
     \if{html}{\out{<div class="r">}}
     \preformatted{ADModel$value(at, taped = !is.null(self$tape_ptr))}
     \if{html}{\out{</div>}}
+  }
+  \subsection{Arguments}{
+    \if{html}{\out{<div class="arguments">}}
+    \describe{
+      \item{\code{at}}{Named input values. Taped evaluation requires the active `wrt`
+inputs; untaped evaluation requires every IR input.}
+      \item{\code{taped}}{Use the persistent tape when available.}
+    }
+    \if{html}{\out{</div>}}
+  }
+  \subsection{Returns}{
+    A named numeric vector of model outputs.
   }
 }
 
@@ -58,10 +112,21 @@ reconstruction, while C++ owns the executable program and persistent tape.
 \if{html}{\out{<a id="method-ADModel-jacobian"></a>}}
 \if{latex}{\out{\hypertarget{method-ADModel-jacobian}{}}}
 \subsection{\code{ADModel$jacobian()}}{
+  Evaluate the exact output-by-input Jacobian of the recorded tape.
   \subsection{Usage}{
     \if{html}{\out{<div class="r">}}
     \preformatted{ADModel$jacobian(at)}
     \if{html}{\out{</div>}}
+  }
+  \subsection{Arguments}{
+    \if{html}{\out{<div class="arguments">}}
+    \describe{
+      \item{\code{at}}{Named values for the active differentiation inputs.}
+    }
+    \if{html}{\out{</div>}}
+  }
+  \subsection{Returns}{
+    A numeric matrix with one row per output and one column per input.
   }
 }
 
@@ -69,10 +134,21 @@ reconstruction, while C++ owns the executable program and persistent tape.
 \if{html}{\out{<a id="method-ADModel-gradient"></a>}}
 \if{latex}{\out{\hypertarget{method-ADModel-gradient}{}}}
 \subsection{\code{ADModel$gradient()}}{
+  Evaluate the exact gradient of a single-output tape.
   \subsection{Usage}{
     \if{html}{\out{<div class="r">}}
     \preformatted{ADModel$gradient(at)}
     \if{html}{\out{</div>}}
+  }
+  \subsection{Arguments}{
+    \if{html}{\out{<div class="arguments">}}
+    \describe{
+      \item{\code{at}}{Named values for the active differentiation inputs.}
+    }
+    \if{html}{\out{</div>}}
+  }
+  \subsection{Returns}{
+    A numeric gradient vector.
   }
 }
 
@@ -80,10 +156,21 @@ reconstruction, while C++ owns the executable program and persistent tape.
 \if{html}{\out{<a id="method-ADModel-hessian"></a>}}
 \if{latex}{\out{\hypertarget{method-ADModel-hessian}{}}}
 \subsection{\code{ADModel$hessian()}}{
+  Evaluate the exact Hessian of a single-output tape.
   \subsection{Usage}{
     \if{html}{\out{<div class="r">}}
     \preformatted{ADModel$hessian(at)}
     \if{html}{\out{</div>}}
+  }
+  \subsection{Arguments}{
+    \if{html}{\out{<div class="arguments">}}
+    \describe{
+      \item{\code{at}}{Named values for the active differentiation inputs.}
+    }
+    \if{html}{\out{</div>}}
+  }
+  \subsection{Returns}{
+    A square numeric Hessian matrix.
   }
 }
 
@@ -91,10 +178,21 @@ reconstruction, while C++ owns the executable program and persistent tape.
 \if{html}{\out{<a id="method-ADModel-value_gradient"></a>}}
 \if{latex}{\out{\hypertarget{method-ADModel-value_gradient}{}}}
 \subsection{\code{ADModel$value_gradient()}}{
+  Evaluate a single-output value and its exact gradient together.
   \subsection{Usage}{
     \if{html}{\out{<div class="r">}}
     \preformatted{ADModel$value_gradient(at)}
     \if{html}{\out{</div>}}
+  }
+  \subsection{Arguments}{
+    \if{html}{\out{<div class="arguments">}}
+    \describe{
+      \item{\code{at}}{Named values for the active differentiation inputs.}
+    }
+    \if{html}{\out{</div>}}
+  }
+  \subsection{Returns}{
+    A list containing `value` and `gradient`.
   }
 }
 
@@ -102,10 +200,21 @@ reconstruction, while C++ owns the executable program and persistent tape.
 \if{html}{\out{<a id="method-ADModel-print"></a>}}
 \if{latex}{\out{\hypertarget{method-ADModel-print}{}}}
 \subsection{\code{ADModel$print()}}{
+  Print a concise summary of the compiled program and tape state.
   \subsection{Usage}{
     \if{html}{\out{<div class="r">}}
     \preformatted{ADModel$print(...)}
     \if{html}{\out{</div>}}
+  }
+  \subsection{Arguments}{
+    \if{html}{\out{<div class="arguments">}}
+    \describe{
+      \item{\code{...}}{Unused.}
+    }
+    \if{html}{\out{</div>}}
+  }
+  \subsection{Returns}{
+    The model, invisibly.
   }
 }
 

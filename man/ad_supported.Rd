@@ -6,6 +6,13 @@
 \usage{
 ad_supported()
 }
+\value{
+A named list of accepted indexed inputs, operators, mathematical
+  functions, conditionals, and deliberate language limitations.
+}
 \description{
 Report supported compiler constructs
+}
+\examples{
+ad_supported()
 }

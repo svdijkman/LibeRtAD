@@ -6,6 +6,12 @@
 \usage{
 ad_engine_info()
 }
+\value{
+A named list describing the compiled backend and dependency versions.
+}
 \description{
 C++ engine and dependency information
+}
+\examples{
+ad_engine_info()
 }

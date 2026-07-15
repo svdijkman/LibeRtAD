@@ -196,6 +196,12 @@
 #' @param outputs Optional assignment names to expose. The default exposes all
 #'   assignments, with the most recent value for reassigned names.
 #' @return A serializable `libertad_ir` object.
+#' @examples
+#' ir <- ad_ir(
+#'   "CL = THETA(1) * exp(ETA(1))\nY = log(CL)",
+#'   outputs = "Y"
+#' )
+#' ir
 #' @export
 ad_ir <- function(code, inputs = character(), outputs = NULL) {
   code <- .ad_clean_code(code)

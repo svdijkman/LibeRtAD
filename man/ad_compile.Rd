@@ -36,3 +36,13 @@ An `ADModel` R6 object.
 \description{
 Compile an R-like mathematical model
 }
+\examples{
+model <- ad_compile(
+  "CL = THETA(1) * exp(ETA(1))\nPENALTY = log(CL)^2",
+  at = c(THETA_1 = 2, ETA_1 = 0),
+  wrt = c("THETA_1", "ETA_1"),
+  outputs = "PENALTY"
+)
+model$value_gradient(c(THETA_1 = 2, ETA_1 = 0))
+model$hessian(c(THETA_1 = 2, ETA_1 = 0))
+}

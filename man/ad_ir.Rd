@@ -22,3 +22,10 @@ A serializable `libertad_ir` object.
 \description{
 Compile mathematical model code to a serializable intermediate representation
 }
+\examples{
+ir <- ad_ir(
+  "CL = THETA(1) * exp(ETA(1))\nY = log(CL)",
+  outputs = "Y"
+)
+ir
+}
