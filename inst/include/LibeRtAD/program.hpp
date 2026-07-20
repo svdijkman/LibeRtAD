@@ -1,7 +1,6 @@
 #ifndef LIBERTAD_PROGRAM_HPP
 #define LIBERTAD_PROGRAM_HPP
 
-#include <RcppEigen.h>
 #include <LibeRtAD/cppad_r_output.hpp>
 
 #include <algorithm>
@@ -325,14 +324,21 @@ struct TapeHandle {
   TapeHandle(std::shared_ptr<const Program> program_in,
              CppAD::ADFun<double>&& fun_in,
              std::vector<std::string> domain_in,
+             std::vector<std::string> dynamic_in,
+             std::vector<double> dynamic_values_in,
              std::vector<std::string> range_in)
       : program(std::move(program_in)), fun(std::move(fun_in)),
-        domain(std::move(domain_in)), range(std::move(range_in)) {}
+        domain(std::move(domain_in)), dynamic(std::move(dynamic_in)),
+        dynamic_values(std::move(dynamic_values_in)), range(std::move(range_in)) {}
 
   std::shared_ptr<const Program> program;
   CppAD::ADFun<double> fun;
   std::vector<std::string> domain;
+  std::vector<std::string> dynamic;
+  std::vector<double> dynamic_values;
   std::vector<std::string> range;
+  std::string derivative_strategy = "not-evaluated";
+  std::size_t jacobian_nonzeros = 0;
 };
 
 }  // namespace libertad

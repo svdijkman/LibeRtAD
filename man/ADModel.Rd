@@ -20,6 +20,11 @@ until [ADModel]$record() is called.}
     \item{\code{wrt}}{Character vector naming the active differentiation inputs.}
 
     \item{\code{outputs}}{Character vector naming the active model outputs.}
+
+    \item{\code{dynamic}}{Character vector naming non-differentiated inputs retained
+as CppAD dynamic parameters.}
+
+    \item{\code{dynamic_values}}{Current named values of the tape's dynamic parameters.}
   }
   \if{html}{\out{</div>}}
 }
@@ -28,11 +33,15 @@ until [ADModel]$record() is called.}
   \itemize{
     \item \href{#method-ADModel-initialize}{\code{ADModel$new()}}
     \item \href{#method-ADModel-record}{\code{ADModel$record()}}
+    \item \href{#method-ADModel-set_dynamic}{\code{ADModel$set_dynamic()}}
     \item \href{#method-ADModel-value}{\code{ADModel$value()}}
     \item \href{#method-ADModel-jacobian}{\code{ADModel$jacobian()}}
     \item \href{#method-ADModel-gradient}{\code{ADModel$gradient()}}
     \item \href{#method-ADModel-hessian}{\code{ADModel$hessian()}}
     \item \href{#method-ADModel-value_gradient}{\code{ADModel$value_gradient()}}
+    \item \href{#method-ADModel-tape_info}{\code{ADModel$tape_info()}}
+    \item \href{#method-ADModel-tape_cache}{\code{ADModel$tape_cache()}}
+    \item \href{#method-ADModel-save_tape}{\code{ADModel$save_tape()}}
     \item \href{#method-ADModel-print}{\code{ADModel$print()}}
     \item \href{#method-ADModel-clone}{\code{ADModel$clone()}}
   }
@@ -76,6 +85,29 @@ until [ADModel]$record() is called.}
       \item{\code{wrt}}{Input names with respect to which derivatives are required.}
       \item{\code{outputs}}{Output assignment names to place on the tape.}
       \item{\code{optimize}}{Whether to run CppAD tape optimization.}
+    }
+    \if{html}{\out{</div>}}
+  }
+  \subsection{Returns}{
+    The model, invisibly.
+  }
+}
+
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-ADModel-set_dynamic"></a>}}
+\if{latex}{\out{\hypertarget{method-ADModel-set_dynamic}{}}}
+\subsection{\code{ADModel$set_dynamic()}}{
+  Update non-differentiated inputs without recording a new tape.
+  \subsection{Usage}{
+    \if{html}{\out{<div class="r">}}
+    \preformatted{ADModel$set_dynamic(values)}
+    \if{html}{\out{</div>}}
+  }
+  \subsection{Arguments}{
+    \if{html}{\out{<div class="arguments">}}
+    \describe{
+      \item{\code{values}}{Named values for every dynamic parameter. An unnamed vector
+may be supplied in the order shown by `$dynamic`.}
     }
     \if{html}{\out{</div>}}
   }
@@ -193,6 +225,60 @@ inputs; untaped evaluation requires every IR input.}
   }
   \subsection{Returns}{
     A list containing `value` and `gradient`.
+  }
+}
+
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-ADModel-tape_info"></a>}}
+\if{latex}{\out{\hypertarget{method-ADModel-tape_info}{}}}
+\subsection{\code{ADModel$tape_info()}}{
+  Return tape dimensions, operation counts, dynamic-parameter state, and
+comparison-change telemetry.
+  \subsection{Usage}{
+    \if{html}{\out{<div class="r">}}
+    \preformatted{ADModel$tape_info()}
+    \if{html}{\out{</div>}}
+  }
+  \subsection{Returns}{
+    A named list describing the current persistent tape.
+  }
+}
+
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-ADModel-tape_cache"></a>}}
+\if{latex}{\out{\hypertarget{method-ADModel-tape_cache}{}}}
+\subsection{\code{ADModel$tape_cache()}}{
+  Create a portable cache of the optimized CppAD graph and its metadata.
+The serializable IR remains included as the auditable source of truth.
+  \subsection{Usage}{
+    \if{html}{\out{<div class="r">}}
+    \preformatted{ADModel$tape_cache()}
+    \if{html}{\out{</div>}}
+  }
+  \subsection{Returns}{
+    A `libertad_tape_cache` list suitable for `saveRDS()`.
+  }
+}
+
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-ADModel-save_tape"></a>}}
+\if{latex}{\out{\hypertarget{method-ADModel-save_tape}{}}}
+\subsection{\code{ADModel$save_tape()}}{
+  Save the optimized CppAD graph for fast worker reconstruction.
+  \subsection{Usage}{
+    \if{html}{\out{<div class="r">}}
+    \preformatted{ADModel$save_tape(path)}
+    \if{html}{\out{</div>}}
+  }
+  \subsection{Arguments}{
+    \if{html}{\out{<div class="arguments">}}
+    \describe{
+      \item{\code{path}}{Destination `.rds` path.}
+    }
+    \if{html}{\out{</div>}}
+  }
+  \subsection{Returns}{
+    The normalized cache path, invisibly.
   }
 }
 

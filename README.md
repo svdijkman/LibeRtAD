@@ -3,8 +3,14 @@
 LibeRtAD is the automatic-differentiation engine for the LibeR population
 PK/PD modelling system. It compiles a restricted R-like mathematical language
 to a serializable intermediate representation and evaluates persistent CppAD
-tapes through RcppEigenAD. R owns only a light R6/external-pointer wrapper;
-values, gradients, Jacobians, and Hessians are evaluated in C++.
+tapes using the bundled official CppAD 20260000.0 and Eigen 3.4.0 headers. R
+owns only a light R6/external-pointer wrapper; values, gradients, Jacobians,
+Hessians, and matrix operations are evaluated in C++.
+
+It also supplies normalized standard-normal Gauss--Hermite rules, guarded
+tensor grids through `ad_gauss_hermite()`, and signed-weight Smolyak sparse
+grids through `ad_smolyak_gauss_hermite()`. LibeRation uses both for its
+deterministic adaptive quadrature estimator.
 
 ## Example
 
@@ -22,13 +28,36 @@ model$value_gradient(c(THETA_1 = 2, ETA_1 = 0))
 model$hessian(c(THETA_1 = 2, ETA_1 = 0))
 ```
 
+## Benchmark laboratory
+
+Run a reproducible native benchmark from R:
+
+```r
+result <- ad_benchmark("pk", iterations = 1000, warmups = 50)
+result
+```
+
+Or open the purple React workbench:
+
+```r
+libertad_gui()
+```
+
+The GUI separates tape recording from repeated value, gradient/Jacobian, and
+Hessian calls and reports agreement against independent R references. When it
+is opened from the LibeR source checkout, it can also launch and cancel the
+existing fresh-process LibeRation/NONMEM benchmark harness and stream its log.
+
 ## Installation
 
-LibeRtAD requires R 4.1 or newer, a C++17 toolchain, Rcpp, RcppEigen,
-RcppEigenAD, BH, and R6. From a source checkout:
+LibeRtAD requires R 4.1 or newer, a C++17 toolchain, Rcpp, R6, and its
+Shiny/React GUI dependencies. CppAD 20260000.0 and Eigen 3.4.0 are bundled and
+do not require separate installation. From a source checkout:
 
 ```text
 R CMD INSTALL .
 ```
 
-LibeRtAD is MIT licensed.
+LibeRtAD is MIT licensed. The bundled CppAD headers retain their EPL-2.0 or
+GPL-2.0-or-later dual licence. The bundled Eigen headers retain their MPL-2.0
+or more permissive licences.

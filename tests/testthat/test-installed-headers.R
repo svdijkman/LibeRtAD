@@ -1,0 +1,12 @@
+test_that("the bundled CppAD and Eigen public headers are installed", {
+  include <- system.file("include", package = "LibeRtAD")
+  expect_true(nzchar(include))
+  expect_true(file.exists(file.path(include, "cppad", "cppad.hpp")))
+  expect_true(file.exists(file.path(include, "cppad", "configure.hpp")))
+  expect_true(file.exists(file.path(include, "Eigen", "Core")))
+  expect_true(file.exists(file.path(include, "Eigen", "Dense")))
+  expect_true(file.exists(file.path(include, "unsupported", "Eigen", "MatrixFunctions")))
+  expect_true(file.exists(file.path(include, "LibeRtAD", "eigen.hpp")))
+  expect_true(file.exists(file.path(include, "LibeRtAD", "eigen_r.hpp")))
+  expect_true(file.exists(file.path(include, "LibeRtAD", "program.hpp")))
+})

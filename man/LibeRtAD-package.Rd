@@ -6,7 +6,7 @@
 \alias{LibeRtAD-package}
 \title{LibeRtAD: the compiled automatic-differentiation layer for LibeR}
 \description{
-Compiles a restricted R-like mathematical model language to a serializable intermediate representation and evaluates persistent CppAD tapes through RcppEigenAD. A small R6 wrapper owns external pointers while numerical evaluation, gradients, Jacobians, and Hessians execute in C++.
+Compiles a restricted R-like mathematical model language to a serializable intermediate representation and evaluates persistent CppAD tapes using the bundled CppAD 20260000.0 and Eigen 3.4.0 headers. Dynamic parameters allow non-differentiated data to change without retaping, and optimized graph caches reconstruct tapes with exact source-provenance checks. A small R6 wrapper owns external pointers while numerical evaluation, gradients, dense or sparse Jacobians, Hessians, matrix operations, and guarded tensor and Smolyak sparse Gauss-Hermite quadrature grids execute in C++. Includes reproducible automatic-differentiation benchmarks and a local React workbench that can also launch the paired LibeRation and NONMEM validation harness from a LibeR source checkout.
 }
 \author{
 \strong{Maintainer}: Sven C. van Dijkman \email{svdijkman@users.noreply.github.com}

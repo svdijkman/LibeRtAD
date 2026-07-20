@@ -36,6 +36,11 @@ ADModel <- R6::R6Class(
     wrt = NULL,
     #' @field outputs Character vector naming the active model outputs.
     outputs = NULL,
+    #' @field dynamic Character vector naming non-differentiated inputs retained
+    #'   as CppAD dynamic parameters.
+    dynamic = NULL,
+    #' @field dynamic_values Current named values of the tape's dynamic parameters.
+    dynamic_values = NULL,
 
     #' @description
     #' Create a pointer-backed model from a validated intermediate representation.
@@ -71,7 +76,21 @@ ADModel <- R6::R6Class(
         self$program_ptr, at, wrt, outputs, isTRUE(optimize)
       )
       self$wrt <- wrt
+      self$dynamic <- setdiff(self$ir$input_names, wrt)
+      self$dynamic_values <- at[self$dynamic]
       self$outputs <- outputs
+      invisible(self)
+    },
+
+    #' @description
+    #' Update non-differentiated inputs without recording a new tape.
+    #' @param values Named values for every dynamic parameter. An unnamed vector
+    #'   may be supplied in the order shown by `$dynamic`.
+    #' @return The model, invisibly.
+    set_dynamic = function(values) {
+      private$require_tape()
+      values <- .ad_named_values(values, self$dynamic, "dynamic parameter values")
+      self$dynamic_values <- .libertad_tape_new_dynamic(self$tape_ptr, values)
       invisible(self)
     },
 
@@ -84,7 +103,7 @@ ADModel <- R6::R6Class(
     value = function(at, taped = !is.null(self$tape_ptr)) {
       if (isTRUE(taped)) {
         private$require_tape()
-        x <- .ad_named_values(at, self$wrt, "tape values")
+        x <- private$tape_values(at)
         return(.libertad_tape_value(self$tape_ptr, x))
       }
       at <- .ad_named_values(at, self$ir$input_names, "program values")
@@ -97,7 +116,7 @@ ADModel <- R6::R6Class(
     #' @return A numeric matrix with one row per output and one column per input.
     jacobian = function(at) {
       private$require_tape()
-      x <- .ad_named_values(at, self$wrt, "tape values")
+      x <- private$tape_values(at)
       .libertad_tape_jacobian(self$tape_ptr, x)
     },
 
@@ -122,7 +141,7 @@ ADModel <- R6::R6Class(
       if (length(self$outputs) != 1L) {
         .ad_stop("hessian() requires a tape with exactly one output.")
       }
-      x <- .ad_named_values(at, self$wrt, "tape values")
+      x <- private$tape_values(at)
       .libertad_tape_hessian(self$tape_ptr, x)
     },
 
@@ -135,8 +154,47 @@ ADModel <- R6::R6Class(
       if (length(self$outputs) != 1L) {
         .ad_stop("value_gradient() requires a tape with exactly one output.")
       }
-      x <- .ad_named_values(at, self$wrt, "tape values")
+      x <- private$tape_values(at)
       .libertad_tape_value_gradient(self$tape_ptr, x)
+    },
+
+    #' @description
+    #' Return tape dimensions, operation counts, dynamic-parameter state, and
+    #' comparison-change telemetry.
+    #' @return A named list describing the current persistent tape.
+    tape_info = function() {
+      private$require_tape()
+      .libertad_tape_info(self$tape_ptr)
+    },
+
+    #' @description
+    #' Create a portable cache of the optimized CppAD graph and its metadata.
+    #' The serializable IR remains included as the auditable source of truth.
+    #' @return A `libertad_tape_cache` list suitable for `saveRDS()`.
+    tape_cache = function() {
+      private$require_tape()
+      structure(list(
+        version = 1L,
+        cppad_version = ad_engine_info()$cppad_version,
+        cppad_source_commit = ad_engine_info()$cppad_source_commit,
+        ir = self$ir,
+        graph_json = .libertad_tape_graph_json(self$tape_ptr),
+        domain = self$wrt,
+        dynamic = self$dynamic,
+        dynamic_values = self$dynamic_values,
+        range = self$outputs
+      ), class = "libertad_tape_cache")
+    },
+
+    #' @description
+    #' Save the optimized CppAD graph for fast worker reconstruction.
+    #' @param path Destination `.rds` path.
+    #' @return The normalized cache path, invisibly.
+    save_tape = function(path) {
+      path <- normalizePath(path, mustWork = FALSE)
+      dir.create(dirname(path), recursive = TRUE, showWarnings = FALSE)
+      saveRDS(self$tape_cache(), path, version = 3L)
+      invisible(path)
     },
 
     #' @description
@@ -148,6 +206,9 @@ ADModel <- R6::R6Class(
       cat("  inputs:", paste(self$ir$input_names, collapse = ", "), "\n")
       cat("  outputs:", paste(self$outputs, collapse = ", "), "\n")
       cat("  tape:", if (is.null(self$tape_ptr)) "not recorded" else paste("recorded wrt", paste(self$wrt, collapse = ", ")), "\n")
+      if (!is.null(self$tape_ptr) && length(self$dynamic)) {
+        cat("  dynamic:", paste(self$dynamic, collapse = ", "), "\n")
+      }
       invisible(self)
     }
   ),
@@ -156,9 +217,51 @@ ADModel <- R6::R6Class(
       if (is.null(self$tape_ptr)) {
         .ad_stop("No tape has been recorded. Call $record(at, wrt, outputs) first.")
       }
+    },
+    tape_values = function(at) {
+      nms <- names(at)
+      if (!is.null(nms) && length(self$dynamic)) {
+        supplied <- intersect(self$dynamic, nms)
+        if (length(supplied)) {
+          next_values <- self$dynamic_values
+          next_values[supplied] <- as.numeric(at[supplied])
+          self$set_dynamic(next_values)
+        }
+      }
+      .ad_named_values(at, self$wrt, "tape values")
     }
   )
 )
+
+#' Load a cached LibeRtAD tape
+#'
+#' Reconstructs an [ADModel] directly from a saved CppAD graph while retaining
+#' and validating the model IR and exact bundled-CppAD provenance.
+#' @param path An `.rds` file created by [ADModel]$save_tape().
+#' @return A ready-to-evaluate `ADModel`.
+#' @export
+ad_load_tape <- function(path) {
+  cache <- readRDS(path)
+  if (!inherits(cache, "libertad_tape_cache") ||
+      !identical(cache$version, 1L)) {
+    .ad_stop("`path` is not a supported LibeRtAD tape cache.")
+  }
+  engine <- ad_engine_info()
+  if (!identical(cache$cppad_version, engine$cppad_version) ||
+      !identical(cache$cppad_source_commit, engine$cppad_source_commit)) {
+    .ad_stop("The tape cache was created by a different bundled CppAD build.")
+  }
+  model <- ADModel$new(cache$ir)
+  model$tape_ptr <- .libertad_tape_from_graph_json(
+    model$program_ptr, cache$graph_json, cache$domain, cache$dynamic,
+    cache$dynamic_values, cache$range
+  )
+  model$wrt <- cache$domain
+  model$dynamic <- cache$dynamic
+  model$dynamic_values <- cache$dynamic_values
+  model$outputs <- cache$range
+  model
+}
 
 #' Compile an R-like mathematical model
 #'
@@ -217,4 +320,19 @@ ad_supported <- function() {
 #' @export
 ad_engine_info <- function() {
   .libertad_engine_info()
+}
+
+#' Benchmark nested-AD-safe CppAD checkpoint prototypes
+#'
+#' Compares repeated direct recordings with `chkpoint_two` prototypes for an
+#' ADVAN1 interval and a 2-by-2 matrix state update. The checkpoint objects are
+#' explicitly configured for the nested AD route used by LibeRation curvature
+#' calculations. Results are diagnostic; production selection remains guarded
+#' by measured performance and tape size.
+#' @param repetitions Number of repeated kernel uses on each outer tape.
+#' @param evaluations Number of zero-order evaluations used for timing.
+#' @return A named list of operation counts, accuracy checks, and timings.
+#' @export
+ad_checkpoint_probe <- function(repetitions = 64L, evaluations = 1000L) {
+  .libertad_checkpoint_probe(as.integer(repetitions), as.integer(evaluations))
 }

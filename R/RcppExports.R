@@ -13,6 +13,22 @@
     .Call(`_LibeRtAD_libertad_tape_create`, program_pointer, at, wrt, outputs, optimize)
 }
 
+.libertad_tape_new_dynamic <- function(tape_pointer, values) {
+    .Call(`_LibeRtAD_libertad_tape_new_dynamic`, tape_pointer, values)
+}
+
+.libertad_tape_info <- function(tape_pointer) {
+    .Call(`_LibeRtAD_libertad_tape_info`, tape_pointer)
+}
+
+.libertad_tape_graph_json <- function(tape_pointer) {
+    .Call(`_LibeRtAD_libertad_tape_graph_json`, tape_pointer)
+}
+
+.libertad_tape_from_graph_json <- function(program_pointer, graph_json, domain, dynamic, dynamic_values, range) {
+    .Call(`_LibeRtAD_libertad_tape_from_graph_json`, program_pointer, graph_json, domain, dynamic, dynamic_values, range)
+}
+
 .libertad_tape_value <- function(tape_pointer, x) {
     .Call(`_LibeRtAD_libertad_tape_value`, tape_pointer, x)
 }
@@ -27,6 +43,18 @@
 
 .libertad_tape_value_gradient <- function(tape_pointer, x) {
     .Call(`_LibeRtAD_libertad_tape_value_gradient`, tape_pointer, x)
+}
+
+.libertad_gauss_hermite_grid <- function(order = 5L, dimension = 1L, max_points = 100000.0) {
+    .Call(`_LibeRtAD_libertad_gauss_hermite_grid`, order, dimension, max_points)
+}
+
+.libertad_smolyak_gauss_hermite_grid <- function(level = 3L, dimension = 4L, max_points = 100000.0) {
+    .Call(`_LibeRtAD_libertad_smolyak_gauss_hermite_grid`, level, dimension, max_points)
+}
+
+.libertad_checkpoint_probe <- function(repetitions = 64L, evaluations = 1000L) {
+    .Call(`_LibeRtAD_libertad_checkpoint_probe`, repetitions, evaluations)
 }
 
 .libertad_engine_info <- function() {

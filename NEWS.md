@@ -1,3 +1,40 @@
+# LibeRtAD 0.7.3
+
+- Bundles the official Eigen 3.4.0 headers and CppAD's upstream Eigen scalar
+  adapter directly, with pinned source provenance and installed licence texts.
+- Removes the RcppEigen build dependency. A small explicit dense-vector and
+  dense-matrix R bridge replaces the handful of conversions used by LibeRation.
+- Exposes the bundled Eigen version and source commit through
+  `ad_engine_info()` and installs the public Eigen compatibility headers for
+  downstream packages using `LinkingTo: LibeRtAD`.
+
+# LibeRtAD 0.7.2
+
+- Installs the complete bundled CppAD header tree under `include/cppad`, so
+  downstream packages using `LinkingTo: LibeRtAD` can include
+  `<cppad/cppad.hpp>` without a separate system CppAD installation.
+
+# LibeRtAD 0.7.1
+
+- Added a C++ Golub--Welsch Gauss--Hermite rule and guarded tensor-grid
+  generator for deterministic marginal-likelihood integration in LibeRation,
+  plus consolidated signed-weight Smolyak sparse grids with odd-linear growth.
+
+- Replaced the archived RcppEigenAD build dependency with official CppAD
+  headers, owned and versioned directly by LibeRtAD, and advanced the bundled
+  release to CppAD 20260000.0.
+- Added explicit CppAD version and source-commit reporting to engine metadata.
+- Retained the established persistent-tape API and R-console output adapter.
+- Added CppAD dynamic parameters for recorded inputs outside the active
+  differentiation domain, including zero-to-nonzero updates without retaping.
+- Added portable optimized-graph caches with exact CppAD provenance checks via
+  `ADModel$save_tape()` and `ad_load_tape()`.
+- Added automatic dense multi-direction Forward and sparse subgraph-Reverse
+  Jacobian strategies with tape telemetry.
+- Added exact, nested-AD-safe `chkpoint_two` ADVAN1 and 2x2 matrix prototypes.
+  Benchmarks intentionally leave these outside the production path because
+  their overhead exceeds direct taping for the current small kernels.
+
 # LibeRtAD 0.6.0
 
 - Replaced the legacy R-level AD implementation with a persistent
