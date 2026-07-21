@@ -3,7 +3,7 @@
 LibeRtAD is the automatic-differentiation engine for the LibeR population
 PK/PD modelling system. It compiles a restricted R-like mathematical language
 to a serializable intermediate representation and evaluates persistent CppAD
-tapes using the bundled official CppAD 20260000.0 and Eigen 3.4.0 headers. R
+tapes using the bundled official CppAD 20260000.0 and Eigen 5.0.1 headers. R
 owns only a light R6/external-pointer wrapper; values, gradients, Jacobians,
 Hessians, and matrix operations are evaluated in C++.
 
@@ -51,12 +51,18 @@ existing fresh-process LibeRation/NONMEM benchmark harness and stream its log.
 ## Installation
 
 LibeRtAD requires R 4.1 or newer, a C++17 toolchain, Rcpp, R6, and its
-Shiny/React GUI dependencies. CppAD 20260000.0 and Eigen 3.4.0 are bundled and
+Shiny/React GUI dependencies. CppAD 20260000.0 and Eigen 5.0.1 are bundled and
 do not require separate installation. From a source checkout:
 
 ```text
 R CMD INSTALL .
 ```
+
+## AI-assisted development
+
+GPT-5.6 was used as an AI engineering collaborator to help review and implement
+the CppAD/Eigen integration, numerical kernels, benchmarks, tests, and documentation.
+Scientific direction, architecture, validation criteria, and release decisions remain the responsibility of the project owner.
 
 LibeRtAD is MIT licensed. The bundled CppAD headers retain their EPL-2.0 or
 GPL-2.0-or-later dual licence. The bundled Eigen headers retain their MPL-2.0
