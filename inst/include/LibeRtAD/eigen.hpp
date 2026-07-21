@@ -19,13 +19,13 @@
 
 namespace libertad {
 
-inline constexpr const char* eigen_version = "3.4.0";
+inline constexpr const char* eigen_version = "5.0.1";
 inline constexpr const char* eigen_source_commit =
-  "3147391d946bb4b6c68edd901f2add6ac1f31f8c";
+  "bc3b39870ecb690a623a3f49149a358b95c5781d";
 
-static_assert(EIGEN_WORLD_VERSION == 3 && EIGEN_MAJOR_VERSION == 4 &&
-                EIGEN_MINOR_VERSION == 0,
-              "LibeRtAD must be compiled against its bundled Eigen 3.4.0 headers.");
+static_assert(EIGEN_WORLD_VERSION == 3 && EIGEN_MAJOR_VERSION == 5 &&
+                EIGEN_MINOR_VERSION == 0 && EIGEN_PATCH_VERSION == 1,
+              "LibeRtAD must be compiled against its bundled Eigen 5.0.1 headers.");
 
 }  // namespace libertad
 

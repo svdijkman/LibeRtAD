@@ -1,6 +1,21 @@
+# LibeRtAD 0.7.4
+
+- Corrects CppAD conditionals whose comparison operands are fixed parameters.
+  The selected AD expression is now retained instead of being collapsed to its
+  value at tape-recording time. Dynamic-parameter conditions remain replayable
+  without retaping. This restores exact emission gradients for categorical,
+  Markov, and hidden Markov likelihoods driven by fixed observed data.
+
 # LibeRtAD 0.7.3
 
-- Bundles the official Eigen 3.4.0 headers and CppAD's upstream Eigen scalar
+- Upgrades the bundled Eigen headers from 3.4.0 to the official Eigen 5.0.1
+  release, with pinned source provenance, release checksum, and installed
+  Apache-2.0/MPL-2.0/MINPACK licence texts.
+- Preserves exact derivatives through data-driven `ifelse()` branches when a
+  comparison contains only CppAD parameters. This fixes gradients for
+  categorical, Markov, and hidden Markov emissions that select a
+  parameter-dependent likelihood using an observed outcome.
+- Bundles CppAD's upstream Eigen scalar
   adapter directly, with pinned source provenance and installed licence texts.
 - Removes the RcppEigen build dependency. A small explicit dense-vector and
   dense-matrix R bridge replaces the handful of conversions used by LibeRation.

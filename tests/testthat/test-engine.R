@@ -45,6 +45,47 @@ test_that("non-active inputs are reusable CppAD dynamic parameters", {
   expect_equal(unname(model$dynamic_values), 4)
 })
 
+test_that("data-driven conditionals retain derivatives of the selected branch", {
+  code <- paste(
+    "LEFT = X^2",
+    "RIGHT = exp(X)",
+    "Y = ifelse(DV == 0, LEFT, RIGHT)",
+    sep = "\n"
+  )
+  model <- ad_compile(
+    code, inputs = c("X", "DV"), outputs = "Y",
+    at = c(X = 2, DV = 0), wrt = "X"
+  )
+
+  expect_equal(unname(model$gradient(c(X = 3, DV = 0))), 6,
+               tolerance = 1e-12)
+  expect_equal(unname(model$gradient(c(X = 3, DV = 1))), exp(3),
+               tolerance = 1e-12)
+})
+
+test_that("static conditionals return the selected AD expression, not its recording value", {
+  code <- paste(
+    "LT = ifelse(0 < 1, X^2, exp(X))",
+    "LE = ifelse(1 <= 1, X^2, exp(X))",
+    "GT = ifelse(2 > 1, X^2, exp(X))",
+    "GE = ifelse(1 >= 1, X^2, exp(X))",
+    "EQ = ifelse(1 == 1, X^2, exp(X))",
+    "NE = ifelse(0 != 1, X^2, exp(X))",
+    "EQ_FALSE = ifelse(0 == 1, exp(X), X^2)",
+    sep = "\n"
+  )
+  for (optimize in c(FALSE, TRUE)) {
+    model <- ad_compile(
+      code, inputs = "X", at = c(X = 2), wrt = "X",
+      optimize = optimize
+    )
+    expect_equal(unname(model$value(c(X = 3))), rep(9, 7),
+                 tolerance = 1e-12)
+    expect_equal(unname(model$jacobian(c(X = 3))), matrix(6, 7, 1),
+                 tolerance = 1e-12)
+  }
+})
+
 test_that("Jacobian evaluation selects multi-direction and subgraph kernels", {
   dense_code <- paste0(
     "Y", seq_len(20), " = X", seq_len(20), "^2 + X1"
@@ -109,9 +150,9 @@ test_that("engine reports the bundled CppAD provenance", {
     info$cppad_source_commit,
     "5d51b2aa6d6874c8d561da298a90b3721550d45d"
   )
-  expect_identical(info$eigen_version, "3.4.0")
+  expect_identical(info$eigen_version, "5.0.1")
   expect_identical(
     info$eigen_source_commit,
-    "3147391d946bb4b6c68edd901f2add6ac1f31f8c"
+    "bc3b39870ecb690a623a3f49149a358b95c5781d"
   )
 })

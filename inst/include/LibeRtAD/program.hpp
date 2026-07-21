@@ -113,6 +113,15 @@ inline Scalar choose_lt(const Scalar& left, const Scalar& right,
                         const Scalar& yes, const Scalar& no) {
   return CppAD::CondExpLt(left, right, yes, no);
 }
+inline CppAD::AD<double> choose_lt(
+    const CppAD::AD<double>& left, const CppAD::AD<double>& right,
+    const CppAD::AD<double>& yes, const CppAD::AD<double>& no) {
+  if (CppAD::Parameter(left) && !CppAD::Dynamic(left) &&
+      CppAD::Parameter(right) && !CppAD::Dynamic(right)) {
+    return CppAD::Value(left) < CppAD::Value(right) ? yes : no;
+  }
+  return CppAD::CondExpLt(left, right, yes, no);
+}
 inline double choose_lt(double left, double right, double yes, double no) {
   return left < right ? yes : no;
 }
@@ -120,6 +129,15 @@ inline double choose_lt(double left, double right, double yes, double no) {
 template <class Scalar>
 inline Scalar choose_le(const Scalar& left, const Scalar& right,
                         const Scalar& yes, const Scalar& no) {
+  return CppAD::CondExpLe(left, right, yes, no);
+}
+inline CppAD::AD<double> choose_le(
+    const CppAD::AD<double>& left, const CppAD::AD<double>& right,
+    const CppAD::AD<double>& yes, const CppAD::AD<double>& no) {
+  if (CppAD::Parameter(left) && !CppAD::Dynamic(left) &&
+      CppAD::Parameter(right) && !CppAD::Dynamic(right)) {
+    return CppAD::Value(left) <= CppAD::Value(right) ? yes : no;
+  }
   return CppAD::CondExpLe(left, right, yes, no);
 }
 inline double choose_le(double left, double right, double yes, double no) {
@@ -131,6 +149,15 @@ inline Scalar choose_gt(const Scalar& left, const Scalar& right,
                         const Scalar& yes, const Scalar& no) {
   return CppAD::CondExpGt(left, right, yes, no);
 }
+inline CppAD::AD<double> choose_gt(
+    const CppAD::AD<double>& left, const CppAD::AD<double>& right,
+    const CppAD::AD<double>& yes, const CppAD::AD<double>& no) {
+  if (CppAD::Parameter(left) && !CppAD::Dynamic(left) &&
+      CppAD::Parameter(right) && !CppAD::Dynamic(right)) {
+    return CppAD::Value(left) > CppAD::Value(right) ? yes : no;
+  }
+  return CppAD::CondExpGt(left, right, yes, no);
+}
 inline double choose_gt(double left, double right, double yes, double no) {
   return left > right ? yes : no;
 }
@@ -138,6 +165,15 @@ inline double choose_gt(double left, double right, double yes, double no) {
 template <class Scalar>
 inline Scalar choose_ge(const Scalar& left, const Scalar& right,
                         const Scalar& yes, const Scalar& no) {
+  return CppAD::CondExpGe(left, right, yes, no);
+}
+inline CppAD::AD<double> choose_ge(
+    const CppAD::AD<double>& left, const CppAD::AD<double>& right,
+    const CppAD::AD<double>& yes, const CppAD::AD<double>& no) {
+  if (CppAD::Parameter(left) && !CppAD::Dynamic(left) &&
+      CppAD::Parameter(right) && !CppAD::Dynamic(right)) {
+    return CppAD::Value(left) >= CppAD::Value(right) ? yes : no;
+  }
   return CppAD::CondExpGe(left, right, yes, no);
 }
 inline double choose_ge(double left, double right, double yes, double no) {
@@ -149,6 +185,15 @@ inline Scalar choose_eq(const Scalar& left, const Scalar& right,
                         const Scalar& yes, const Scalar& no) {
   return CppAD::CondExpEq(left, right, yes, no);
 }
+inline CppAD::AD<double> choose_eq(
+    const CppAD::AD<double>& left, const CppAD::AD<double>& right,
+    const CppAD::AD<double>& yes, const CppAD::AD<double>& no) {
+  if (CppAD::Parameter(left) && !CppAD::Dynamic(left) &&
+      CppAD::Parameter(right) && !CppAD::Dynamic(right)) {
+    return CppAD::Value(left) == CppAD::Value(right) ? yes : no;
+  }
+  return CppAD::CondExpEq(left, right, yes, no);
+}
 inline double choose_eq(double left, double right, double yes, double no) {
   return left == right ? yes : no;
 }
@@ -156,6 +201,15 @@ inline double choose_eq(double left, double right, double yes, double no) {
 template <class Scalar>
 inline Scalar choose_ne(const Scalar& left, const Scalar& right,
                         const Scalar& yes, const Scalar& no) {
+  return CppAD::CondExpEq(left, right, no, yes);
+}
+inline CppAD::AD<double> choose_ne(
+    const CppAD::AD<double>& left, const CppAD::AD<double>& right,
+    const CppAD::AD<double>& yes, const CppAD::AD<double>& no) {
+  if (CppAD::Parameter(left) && !CppAD::Dynamic(left) &&
+      CppAD::Parameter(right) && !CppAD::Dynamic(right)) {
+    return CppAD::Value(left) != CppAD::Value(right) ? yes : no;
+  }
   return CppAD::CondExpEq(left, right, no, yes);
 }
 inline double choose_ne(double left, double right, double yes, double no) {

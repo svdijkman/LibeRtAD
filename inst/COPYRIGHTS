@@ -17,14 +17,14 @@ LibeRtAD also bundles the Eigen C++ linear-algebra headers required by the
 native AD and pharmacometric engines.
 
 Component: Eigen
-Version: 3.4.0
-Source commit: 3147391d946bb4b6c68edd901f2add6ac1f31f8c
-Source archive SHA-256: 8586084f71f9bde545ee7fa6d00288b264a2b7ac3607b974e54d13e7162c1c72
+Version: 5.0.1
+Source commit: bc3b39870ecb690a623a3f49149a358b95c5781d
+Source archive SHA-256: e9c326dc8c05cd1e044c71f30f1b2e34a6161a3b6ecf445d56b53ff1669e3dec
 Upstream: https://gitlab.com/libeigen/eigen
 Copyright: Copyright (C) Eigen contributors
-Licence: Mozilla Public License 2.0 and more permissive component licences
+Licence: Mozilla Public License 2.0 and compatible third-party component licences
 
 The bundled Eigen/Core tree and the MatrixFunctions unsupported module are
-copied without source modifications from the official 3.4.0 release archive.
-The MPL-2.0 and BSD licence texts are installed at LICENSES/MPL-2.0.txt and
-LICENSES/BSD-3-Clause-Eigen.txt.
+copied without source modifications from the official 5.0.1 release archive.
+The MPL-2.0, BSD, Apache-2.0, and MINPACK licence texts are installed under
+LICENSES/.
