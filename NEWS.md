@@ -1,3 +1,10 @@
+# LibeRtAD 0.7.5
+
+- Adds ecosystem compatibility metadata, continuous-integration coverage, and
+  reproducible release provenance for the consolidated LibeR release.
+- Retains the validated CppAD 20260000.0 and Eigen 5.0.1 numerical ABI; this is
+  an integration release and deliberately does not alter tape mathematics.
+
 # LibeRtAD 0.7.4
 
 - Corrects CppAD conditionals whose comparison operands are fixed parameters.
