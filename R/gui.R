@@ -85,7 +85,10 @@ libertad_gui <- function(benchmark_root = NULL, host = "127.0.0.1", port = NULL,
     htmltools::tags$head(
       htmltools::tags$title("LibeRtAD"),
       if (nzchar(favicon_href)) htmltools::tags$link(rel = "icon", type = "image/svg+xml", href = favicon_href),
-      htmltools::tags$style("html,body{margin:0;min-height:100%;background:#f5f3f8;font-family:Inter,Segoe UI,sans-serif}")
+      htmltools::tags$script(htmltools::HTML(
+        "(function(){try{var t=localStorage.getItem('liber.theme');if(t!=='dark'&&t!=='light'){var l=localStorage.getItem('libertadTheme');t=l==='dark'?'dark':l==='light'?'light':(matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light');}document.documentElement.setAttribute('data-liber-theme',t);}catch(e){}})();"
+      )),
+      htmltools::tags$style("html,body{margin:0;min-height:100%;background:#f5f3f8;font-family:'Segoe UI',Arial,sans-serif}html[data-liber-theme='dark'] body{background:#211c27}")
     ),
     htmltools::tags$body(libertadWorkbenchOutput("libertad_workbench"))
   )
@@ -196,6 +199,7 @@ libertad_gui <- function(benchmark_root = NULL, host = "127.0.0.1", port = NULL,
     session$onSessionEnded(function() .ad_gui_stop_process(state))
   }
   app <- shiny::shinyApp(ui, server)
+  if (is.null(launch.browser)) return(app)
   shiny::runApp(app, host = host, port = port, launch.browser = launch.browser)
   invisible(app)
 }

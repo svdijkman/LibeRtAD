@@ -114,6 +114,37 @@ test_that("Jacobian evaluation selects multi-direction and subgraph kernels", {
   expect_equal(sum(jacobian != 0), 128)
 })
 
+test_that("Hessian evaluation selects and reuses the measured sparse pattern", {
+  inputs <- paste0("X", seq_len(40))
+  terms <- paste0("T", seq_len(40), " = ", inputs, "^2")
+  code <- paste(
+    c(terms, paste0("Y = ", paste0("T", seq_len(40), collapse = " + "))),
+    collapse = "\n"
+  )
+  point <- setNames(seq_len(40) / 10, inputs)
+  model <- ad_compile(
+    code, inputs = inputs, outputs = "Y",
+    at = point, wrt = inputs
+  )
+
+  first <- model$hessian(point)
+  second <- model$hessian(point + 0.1)
+  info <- model$tape_info()
+
+  expect_equal(first, diag(2, 40), tolerance = 1e-12, ignore_attr = TRUE)
+  expect_equal(second, first, tolerance = 1e-12)
+  expect_identical(info$hessian_strategy, "sparse-colored")
+  expect_equal(info$hessian_nonzeros, 40)
+  expect_lte(info$hessian_sweeps, 2)
+
+  small <- ad_compile(
+    "Y = X1^2 + X2^2", inputs = c("X1", "X2"), outputs = "Y",
+    at = c(X1 = 1, X2 = 2), wrt = c("X1", "X2")
+  )
+  small$hessian(c(X1 = 1, X2 = 2))
+  expect_identical(small$tape_info()$hessian_strategy, "dense-directional")
+})
+
 test_that("optimized CppAD graph caches reconstruct without retaping", {
   model <- ad_compile(
     "Y = X^P + P^X", inputs = c("X", "P"), outputs = "Y",

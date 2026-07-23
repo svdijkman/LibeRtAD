@@ -2,6 +2,7 @@
 #define LIBERTAD_PROGRAM_HPP
 
 #include <LibeRtAD/cppad_r_output.hpp>
+#include <LibeRtAD/sparse_hessian.hpp>
 
 #include <algorithm>
 #include <cmath>
@@ -393,6 +394,7 @@ struct TapeHandle {
   std::vector<std::string> range;
   std::string derivative_strategy = "not-evaluated";
   std::size_t jacobian_nonzeros = 0;
+  SparseHessianCache hessian_cache;
 };
 
 }  // namespace libertad

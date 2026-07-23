@@ -2,6 +2,8 @@
 #define LIBERTAD_CPPAD_R_OUTPUT_HPP
 
 #include <Rcpp.h>
+#include <R_ext/Utils.h>
+#include <Rembedded.h>
 
 // LibeRtAD bundles the official CppAD release 20260000.0 at commit
 // 5d51b2aa6d6874c8d561da298a90b3721550d45d. CppAD contains
@@ -27,10 +29,33 @@ inline Rcpp::Rostream<false> cppad_r_error;
 #define cout cppad_r_output
 #define cerr cppad_r_error
 #define exit cppad_r_exit
+#pragma push_macro("NDEBUG")
+#ifndef NDEBUG
+#define NDEBUG
+#endif
 #include <cppad/cppad.hpp>
+#pragma pop_macro("NDEBUG")
 #undef exit
 #undef cerr
 #undef cout
+
+// The header-only LibeRtAD interface is consumed by downstream R packages,
+// which do not link against CppAD's optional cppad_lib target. Current CppAD
+// uses this one library helper only when it needs to persist a NaN diagnostic.
+// Supply the R-session equivalent inline so every consumer remains
+// self-contained and uses R's private temporary directory instead of an
+// unsafe process-global temporary filename.
+namespace CppAD { namespace local {
+inline std::string temp_file(void) {
+  char* path = R_tmpnam2("cppad-", R_TempDir, ".bin");
+  if (path == nullptr) {
+    throw Rcpp::exception("Unable to allocate a temporary CppAD diagnostic file.", false);
+  }
+  std::string result(path);
+  R_free_tmpnam(path);
+  return result;
+}
+} }
 
 namespace libertad {
 inline constexpr const char* cppad_source_commit =

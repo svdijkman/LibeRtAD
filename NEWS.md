@@ -1,3 +1,30 @@
+# LibeRtAD 0.7.8
+
+- Restores the established high-resolution LibeR dove artwork in the purple
+  benchmark workbench and browser favicon.
+- Aligns the benchmark workbench with the LibeR design system, shared
+  light/dark theme preference, transparent dove branding, and visible
+  keyboard focus.
+- Replaces hidden narrow-screen navigation and configuration panels with
+  accessible responsive drawers.
+
+# LibeRtAD 0.7.7
+
+- Adds measured sparse-Hessian selection with cached CppAD sparsity/coloring
+  work and retains dense directional sweeps for small or dense objectives.
+- Reports tape memory proxies and CppAD allocator state, with lifetime stress
+  tests proving pointer finalizers release repeatedly recorded tapes.
+- Expands domain/nonsmooth/high-dimensional derivative regression coverage and
+  adds a reproducible, gracefully skipping LibeRtAD/TMB/CmdStan benchmark
+  harness.
+
+# LibeRtAD 0.7.6
+
+- Adds randomized value, derivative, and conditional-expression property tests.
+- Makes CppAD temporary-file handling safe in debug R builds and converts CppAD
+  assertion exits into catchable R errors instead of terminating the session.
+- Adds browser-level GUI startup coverage and a non-launching app return path.
+
 # LibeRtAD 0.7.5
 
 - Adds ecosystem compatibility metadata, continuous-integration coverage, and

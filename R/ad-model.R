@@ -322,6 +322,27 @@ ad_engine_info <- function() {
   .libertad_engine_info()
 }
 
+#' Inspect CppAD allocator state
+#'
+#' Reports CppAD allocator bytes owned by the current execution thread. This
+#' is primarily a tape-lifetime diagnostic: `inuse_bytes` should return close
+#' to its baseline after pointer-backed models are removed and garbage
+#' collection runs. Cached `available_bytes` are reusable allocator blocks,
+#' not leaked live tapes, and may be released explicitly.
+#' @param release_available Release reusable blocks currently cached by CppAD
+#'   for this thread before returning the report.
+#' @return A named list with thread, parallel-state, live-allocation, cached,
+#'   and released-byte telemetry.
+#' @examples
+#' ad_allocator_info()
+#' @export
+ad_allocator_info <- function(release_available = FALSE) {
+  if (length(release_available) != 1L || is.na(release_available)) {
+    .ad_stop("`release_available` must be TRUE or FALSE.")
+  }
+  .libertad_allocator_info(isTRUE(release_available))
+}
+
 #' Benchmark nested-AD-safe CppAD checkpoint prototypes
 #'
 #' Compares repeated direct recordings with `chkpoint_two` prototypes for an

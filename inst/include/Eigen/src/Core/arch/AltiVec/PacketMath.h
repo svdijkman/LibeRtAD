@@ -434,10 +434,21 @@ EIGEN_STRONG_INLINE Packet pload_common(const __UNPACK_TYPE__(Packet) * from) {
   // ignoring these warnings for now.
   EIGEN_UNUSED_VARIABLE(from);
   EIGEN_DEBUG_ALIGNED_LOAD
+  // Ignore partial input memory initialization without relying on a direct
+  // compiler pragma in the installed public header.
+#if !EIGEN_COMP_LLVM
+#define EIGEN_ALTIVEC_GCC_DIAGNOSTIC(x) _Pragma(#x)
+  EIGEN_ALTIVEC_GCC_DIAGNOSTIC(GCC diagnostic push)
+  EIGEN_ALTIVEC_GCC_DIAGNOSTIC(GCC diagnostic ignored "-Wmaybe-uninitialized")
+#endif
 #ifdef EIGEN_VECTORIZE_VSX
   return vec_xl(0, const_cast<__UNPACK_TYPE__(Packet)*>(from));
 #else
   return vec_ld(0, from);
+#endif
+#if !EIGEN_COMP_LLVM
+  EIGEN_ALTIVEC_GCC_DIAGNOSTIC(GCC diagnostic pop)
+#undef EIGEN_ALTIVEC_GCC_DIAGNOSTIC
 #endif
 }
 
@@ -483,18 +494,10 @@ EIGEN_ALWAYS_INLINE Packet pload_ignore(const __UNPACK_TYPE__(Packet) * from) {
   // ignoring these warnings for now.
   EIGEN_UNUSED_VARIABLE(from);
   EIGEN_DEBUG_ALIGNED_LOAD
-  // Ignore partial input memory initialized
-#if !EIGEN_COMP_LLVM
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
-#endif
 #ifdef EIGEN_VECTORIZE_VSX
   return vec_xl(0, const_cast<__UNPACK_TYPE__(Packet)*>(from));
 #else
   return vec_ld(0, from);
-#endif
-#if !EIGEN_COMP_LLVM
-#pragma GCC diagnostic pop
 #endif
 }
 

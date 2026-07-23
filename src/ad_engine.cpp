@@ -132,6 +132,10 @@ std::vector<double> tape_jacobian(TapeHandle& tape,
 std::vector<double> tape_hessian(TapeHandle& tape,
                                  const std::vector<double>& point) {
   const std::size_t n = tape.domain.size();
+  libertad::analyse_hessian_sparsity(tape.fun, tape.hessian_cache);
+  if (tape.hessian_cache.use_sparse) {
+    return libertad::sparse_hessian(tape.fun, point, tape.hessian_cache);
+  }
   tape_forward_zero(tape, point);
   std::vector<double> hessian(n * n, 0.0);
   std::vector<double> direction(n, 0.0);
@@ -258,19 +262,41 @@ Rcpp::NumericVector libertad_tape_new_dynamic(
 // [[Rcpp::export(name = ".libertad_tape_info")]]
 Rcpp::List libertad_tape_info(SEXP tape_pointer) {
   Rcpp::XPtr<TapeHandle> tape(tape_pointer);
+  const std::size_t taylor_bytes =
+    tape->fun.size_var() * tape->fun.size_order() *
+    std::max<std::size_t>(tape->fun.size_direction(), 1U) * sizeof(double);
   return Rcpp::List::create(
     Rcpp::Named("domain") = tape->domain,
     Rcpp::Named("dynamic") = tape->dynamic,
     Rcpp::Named("dynamic_values") = named_vector(tape->dynamic_values, tape->dynamic),
     Rcpp::Named("range") = tape->range,
     Rcpp::Named("operations") = static_cast<double>(tape->fun.size_op()),
+    Rcpp::Named("operator_arguments") =
+      static_cast<double>(tape->fun.size_op_arg()),
     Rcpp::Named("variables") = static_cast<double>(tape->fun.size_var()),
     Rcpp::Named("dynamic_independent") = static_cast<double>(tape->fun.size_dyn_ind()),
     Rcpp::Named("dynamic_parameters") = static_cast<double>(tape->fun.size_dyn_par()),
     Rcpp::Named("comparison_changes") = static_cast<double>(tape->fun.compare_change_number()),
     Rcpp::Named("comparison_change_operator") = static_cast<double>(tape->fun.compare_change_op_index()),
     Rcpp::Named("derivative_strategy") = tape->derivative_strategy,
-    Rcpp::Named("jacobian_nonzeros") = static_cast<double>(tape->jacobian_nonzeros)
+    Rcpp::Named("jacobian_nonzeros") = static_cast<double>(tape->jacobian_nonzeros),
+    Rcpp::Named("hessian_strategy") = tape->hessian_cache.strategy,
+    Rcpp::Named("hessian_nonzeros") =
+      static_cast<double>(tape->hessian_cache.nonzeros),
+    Rcpp::Named("hessian_density") = tape->hessian_cache.density,
+    Rcpp::Named("hessian_sweeps") =
+      static_cast<double>(tape->hessian_cache.sweeps),
+    Rcpp::Named("operation_sequence_bytes") =
+      static_cast<double>(tape->fun.size_op_seq()),
+    Rcpp::Named("random_access_bytes") =
+      static_cast<double>(tape->fun.size_random()),
+    Rcpp::Named("forward_sparsity_bytes") = static_cast<double>(
+      tape->fun.size_forward_bool() + tape->fun.size_forward_set()),
+    Rcpp::Named("taylor_bytes_proxy") = static_cast<double>(taylor_bytes),
+    Rcpp::Named("resident_bytes_proxy") = static_cast<double>(
+      tape->fun.size_op_seq() + tape->fun.size_random() +
+      tape->fun.size_forward_bool() + tape->fun.size_forward_set() +
+      taylor_bytes)
   );
 }
 
@@ -809,5 +835,27 @@ Rcpp::List libertad_engine_info() {
     Rcpp::Named("persistent_tape") = true,
     Rcpp::Named("cpp_standard") = 17,
     Rcpp::Named("thread_state") = "one independent tape per ADModel"
+  );
+}
+
+// [[Rcpp::export(name = ".libertad_allocator_info")]]
+Rcpp::List libertad_allocator_info(bool release_available = false) {
+  const std::size_t thread = CppAD::thread_alloc::thread_num();
+  const std::size_t before = CppAD::thread_alloc::available(thread);
+  if (release_available) {
+    CppAD::thread_alloc::free_available(thread);
+  }
+  return Rcpp::List::create(
+    Rcpp::Named("thread") = static_cast<double>(thread),
+    Rcpp::Named("threads_configured") =
+      static_cast<double>(CppAD::thread_alloc::num_threads()),
+    Rcpp::Named("in_parallel") = CppAD::thread_alloc::in_parallel(),
+    Rcpp::Named("inuse_bytes") =
+      static_cast<double>(CppAD::thread_alloc::inuse(thread)),
+    Rcpp::Named("available_bytes") =
+      static_cast<double>(CppAD::thread_alloc::available(thread)),
+    Rcpp::Named("released_bytes") =
+      static_cast<double>(before -
+        CppAD::thread_alloc::available(thread))
   );
 }

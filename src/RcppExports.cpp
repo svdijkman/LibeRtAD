@@ -195,6 +195,17 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// libertad_allocator_info
+Rcpp::List libertad_allocator_info(bool release_available);
+RcppExport SEXP _LibeRtAD_libertad_allocator_info(SEXP release_availableSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< bool >::type release_available(release_availableSEXP);
+    rcpp_result_gen = Rcpp::wrap(libertad_allocator_info(release_available));
+    return rcpp_result_gen;
+END_RCPP
+}
 
 static const R_CallMethodDef CallEntries[] = {
     {"_LibeRtAD_libertad_program_create", (DL_FUNC) &_LibeRtAD_libertad_program_create, 1},
@@ -212,6 +223,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_LibeRtAD_libertad_smolyak_gauss_hermite_grid", (DL_FUNC) &_LibeRtAD_libertad_smolyak_gauss_hermite_grid, 3},
     {"_LibeRtAD_libertad_checkpoint_probe", (DL_FUNC) &_LibeRtAD_libertad_checkpoint_probe, 2},
     {"_LibeRtAD_libertad_engine_info", (DL_FUNC) &_LibeRtAD_libertad_engine_info, 0},
+    {"_LibeRtAD_libertad_allocator_info", (DL_FUNC) &_LibeRtAD_libertad_allocator_info, 1},
     {NULL, NULL, 0}
 };
 

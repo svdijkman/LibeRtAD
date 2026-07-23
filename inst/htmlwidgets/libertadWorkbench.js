@@ -4,17 +4,34 @@
   function list(x) { return Array.isArray(x) ? x : []; }
   function val(x, fallback) { return x === undefined || x === null || x === "" ? fallback : x; }
   function fmt(x, digits) { var n = Number(x); return isFinite(n) ? n.toFixed(digits === undefined ? 2 : digits).replace(/\.0+$/, "") : "--"; }
+  function initialDarkTheme(legacyKey) {
+    try {
+      var shared = localStorage.getItem("liber.theme");
+      if (shared === "dark" || shared === "light") return shared === "dark";
+      var legacy = localStorage.getItem(legacyKey);
+      if (legacy === "dark" || legacy === "1") return true;
+      if (legacy === "light" || legacy === "0") return false;
+    } catch (_) {}
+    return !!(window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches);
+  }
+  function storeTheme(dark, legacyKey) {
+    try {
+      localStorage.setItem("liber.theme", dark ? "dark" : "light");
+      localStorage.setItem(legacyKey, dark ? "dark" : "light");
+      document.documentElement.setAttribute("data-liber-theme", dark ? "dark" : "light");
+    } catch (_) {}
+  }
   function emit(props, action, detail) {
     if (!window.Shiny || !window.Shiny.setInputValue) return;
     window.Shiny.setInputValue((props.inputId || "libertad_workbench") + "_event",
       Object.assign({ action: action, nonce: Date.now() }, detail || {}), { priority: "event" });
   }
-  function Button(props) { return e("button", { type: "button", className: "ad-button " + val(props.className, ""), disabled: !!props.disabled, onClick: props.onClick, title: props.title }, props.children); }
+  function Button(props) { return e("button", { type: "button", className: "ad-button " + val(props.className, ""), disabled: !!props.disabled, onClick: props.onClick, title: props.title, "aria-label": props.ariaLabel || props.title }, props.children); }
   function Field(props) { return e("label", { className: "ad-field" }, e("span", null, props.label), props.children, props.help ? e("small", null, props.help) : null); }
   function Check(props) { return e("label", { className: "ad-check" }, e("input", { type: "checkbox", checked: props.checked, onChange: props.onChange }), e("i", null), e("span", null, props.label)); }
   function Panel(props) { return e("section", { className: "ad-panel " + val(props.className, "") }, e("header", null, e("div", null, e("strong", null, props.title), props.subtitle ? e("span", null, props.subtitle) : null), props.actions || null), e("div", { className: "ad-panel-body" }, props.children)); }
   function Empty(props) { return e("div", { className: "ad-empty" }, e("span", null, val(props.icon, "{ }") ), e("strong", null, props.title), e("p", null, props.detail)); }
-  function ThemeSwitch(props) { return e("label", { className: "ad-theme-switch" }, e("span", null, props.dark ? "Dark" : "Light"), e("input", { type: "checkbox", checked: props.dark, onChange: props.onChange }), e("i", null)); }
+  function ThemeSwitch(props) { return e("label", { className: "ad-theme-switch", title: "Switch colour theme" }, e("span", null, props.dark ? "Dark" : "Light"), e("input", { type: "checkbox", checked: props.dark, onChange: props.onChange }), e("i", null)); }
 
   function TimingBars(props) {
     var rows = list(props.native && props.native.timings);
@@ -80,15 +97,23 @@
   }
 
   function Workbench(props) {
-    var mode=React.useState("native"),tab=React.useState("summary"),dark=React.useState(function(){try{return localStorage.getItem("libertadTheme")==="dark";}catch(x){return false;}});
-    function toggle(){var next=!dark[0];dark[1](next);try{localStorage.setItem("libertadTheme",next?"dark":"light");}catch(x){}}
+    var mode=React.useState("native"),tab=React.useState("summary"),dark=React.useState(function(){return initialDarkTheme("libertadTheme");}),navOpen=React.useState(false),configOpen=React.useState(false);
+    React.useEffect(function(){storeTheme(dark[0],"libertadTheme");},[dark[0]]);
+    React.useEffect(function(){
+      function keydown(event){if(event.key==="Escape"){navOpen[1](false);configOpen[1](false);}}
+      document.addEventListener("keydown",keydown);
+      return function(){document.removeEventListener("keydown",keydown);};
+    },[]);
+    function toggle(){dark[1](!dark[0]);}
+    function closeDrawers(){navOpen[1](false);configOpen[1](false);}
     var tabs=["summary","accuracy","runtime log"];
     return e("div",{className:"ad-shell "+(dark[0]?"ad-dark":"ad-light")},
-      e("header",{className:"ad-header"},e("div",{className:"ad-brand"},props.icon?e("img",{src:props.icon,alt:"",className:"ad-logo"}):e("span",{className:"ad-logo-fallback"},"AD"),e("div",null,e("strong",null,"LibeRtAD"),e("span",null,"Automatic differentiation benchmark laboratory"))),e("div",{className:"ad-header-right"},e("span",{className:"ad-engine-badge"},"C++17 / CppAD"),e(ThemeSwitch,{dark:dark[0],onChange:toggle}))),
+      e("header",{className:"ad-header"},e("div",{className:"ad-brand"},props.icon?e("img",{src:props.icon,alt:"",className:"ad-logo"}):e("span",{className:"ad-logo-fallback"},"AD"),e("div",null,e("strong",null,"LibeRtAD"),e("span",null,"Automatic differentiation benchmark laboratory"))),e("div",{className:"ad-header-right"},e("button",{type:"button",className:"ad-drawer-toggle ad-nav-toggle","aria-label":"Open benchmark navigation","aria-expanded":navOpen[0],onClick:function(){navOpen[1](!navOpen[0]);configOpen[1](false);}},"☰"),e("button",{type:"button",className:"ad-drawer-toggle ad-config-toggle","aria-label":"Open benchmark settings","aria-expanded":configOpen[0],onClick:function(){configOpen[1](!configOpen[0]);navOpen[1](false);}},"⚙"),e("span",{className:"ad-engine-badge"},"C++17 / CppAD"),e(ThemeSwitch,{dark:dark[0],onChange:toggle}))),
       e("div",{className:"ad-message ad-message-"+val(props.status&&props.status.level,"info")},e("i",null),e("span",null,val(props.status&&props.status.text,"Benchmark laboratory ready"))),
-      e("div",{className:"ad-layout"},e("aside",{className:"ad-sidebar"},e("strong",{className:"ad-kicker"},"Benchmark suite"),e("button",{className:mode[0]==="native"?"active":"",onClick:function(){mode[1]("native");tab[1]("summary");}},e("b",null,"AD microbenchmarks"),e("span",null,"Tape recording and derivatives")),e("button",{className:mode[0]==="ecosystem"?"active":"",onClick:function(){mode[1]("ecosystem");tab[1]("summary");}},e("b",null,"Ecosystem benchmark"),e("span",null,"LibeRation versus NONMEM")),e("div",{className:"ad-engine-card"},e("strong",null,"Engine"),e("dl",null,e("dt",null,"Backend"),e("dd",null,val(props.engineNamed&&props.engineNamed.backend,"CppAD")),e("dt",null,"Tape"),e("dd",null,props.engineNamed&&props.engineNamed.persistent_tape?"Persistent":"Unavailable"),e("dt",null,"C++"),e("dd",null,val(props.engineNamed&&props.engineNamed.cpp_standard,"17"))))),
+      (navOpen[0]||configOpen[0])?e("button",{type:"button",className:"ad-drawer-backdrop","aria-label":"Close navigation and settings",onClick:closeDrawers}):null,
+      e("div",{className:"ad-layout"},e("aside",{className:"ad-sidebar"+(navOpen[0]?" open":"")},e("strong",{className:"ad-kicker"},"Benchmark suite"),e("button",{className:mode[0]==="native"?"active":"",onClick:function(){mode[1]("native");tab[1]("summary");navOpen[1](false);}},e("b",null,"AD microbenchmarks"),e("span",null,"Tape recording and derivatives")),e("button",{className:mode[0]==="ecosystem"?"active":"",onClick:function(){mode[1]("ecosystem");tab[1]("summary");navOpen[1](false);}},e("b",null,"Ecosystem benchmark"),e("span",null,"LibeRation versus NONMEM")),e("div",{className:"ad-engine-card"},e("strong",null,"Engine"),e("dl",null,e("dt",null,"Backend"),e("dd",null,val(props.engineNamed&&props.engineNamed.backend,"CppAD")),e("dt",null,"Tape"),e("dd",null,props.engineNamed&&props.engineNamed.persistent_tape?"Persistent":"Unavailable"),e("dt",null,"C++"),e("dd",null,val(props.engineNamed&&props.engineNamed.cpp_standard,"17"))))),
         e("main",{className:"ad-main"},e("nav",{className:"ad-tabs"},tabs.map(function(x){var disabled=x==="accuracy"&&mode[0]!=="native";return e("button",{key:x,disabled:disabled,className:tab[0]===x?"active":"",onClick:function(){tab[1](x);}},x);})),e("div",{className:"ad-canvas"},tab[0]==="runtime log"?e(RuntimeLog,props):tab[0]==="accuracy"?e(Accuracy,props):mode[0]==="native"?e(NativeSummary,props):e(EcosystemSummary,props))),
-        e("aside",{className:"ad-config"},e("div",{className:"ad-config-head"},e("strong",null,mode[0]==="native"?"AD benchmark setup":"Workflow setup"),e("span",null,mode[0]==="native"?"Runs in this R session":"Runs in a background R process")),mode[0]==="native"?e(NativeConfig,props):e(EcosystemConfig,props),e("div",{className:"ad-caution"},e("strong",null,"Interpretation"),e("p",null,mode[0]==="native"?"Tiny expressions emphasize call overhead. Use trends and regression changes, not a single timing as a universal speed claim.":"End-to-end time is the operational comparison. Keep the machine idle and use standard profiles for stable conclusions.")))),
+        e("aside",{className:"ad-config"+(configOpen[0]?" open":"")},e("div",{className:"ad-config-head"},e("strong",null,mode[0]==="native"?"AD benchmark setup":"Workflow setup"),e("span",null,mode[0]==="native"?"Runs in this R session":"Runs in a background R process")),mode[0]==="native"?e(NativeConfig,props):e(EcosystemConfig,props),e("div",{className:"ad-caution"},e("strong",null,"Interpretation"),e("p",null,mode[0]==="native"?"Tiny expressions emphasize call overhead. Use trends and regression changes, not a single timing as a universal speed claim.":"End-to-end time is the operational comparison. Keep the machine idle and use standard profiles for stable conclusions.")))),
       e("footer",{className:"ad-footer"},e("span",null,"LibeRtAD v"+val(props.packageVersion,"0.7.0")),e("span",null,"Persistent R pointers / C++ execution / reproducible outputs")));
   }
   reactR.reactWidget("libertadWorkbench", "output", { LibeRtADWorkbench: Workbench }, {});

@@ -61,3 +61,7 @@
     .Call(`_LibeRtAD_libertad_engine_info`)
 }
 
+.libertad_allocator_info <- function(release_available = FALSE) {
+    .Call(`_LibeRtAD_libertad_allocator_info`, release_available)
+}
+
