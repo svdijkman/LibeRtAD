@@ -7,6 +7,11 @@ tapes using the bundled official CppAD 20260000.0 and Eigen 5.0.1 headers. R
 owns only a light R6/external-pointer wrapper; values, gradients, Jacobians,
 Hessians, and matrix operations are evaluated in C++.
 
+LibeRtAD is distributed as part of the LibeR 0.9 research beta. Install a
+complete compatibility set through the [ecosystem installer](../docs/INSTALL.md)
+and consult `LibeRation::liber_support_matrix("LibeRtAD")` before relying on a
+capability.
+
 It also supplies normalized standard-normal Gauss--Hermite rules, guarded
 tensor grids through `ad_gauss_hermite()`, and signed-weight Smolyak sparse
 grids through `ad_smolyak_gauss_hermite()`. LibeRation uses both for its

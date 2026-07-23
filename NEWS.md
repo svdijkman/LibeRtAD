@@ -1,3 +1,11 @@
+# LibeRtAD 0.7.9
+
+- Publishes LibeRtAD in the LibeR 0.9 research-beta compatibility set with an
+  explicit engine support/evidence declaration and scheduled large-study
+  provenance.
+- Retains the independently validated CppAD/Eigen build used by the 0.8.3
+  consolidation baseline.
+
 # LibeRtAD 0.7.8
 
 - Restores the established high-resolution LibeR dove artwork in the purple
